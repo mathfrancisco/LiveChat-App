@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Client } from '@stomp/stompjs';
-import * as SockJS from 'sockjs-client';
-import SockJS from 'sockjs-client';
+import SockJS from 'sockjs-client';  // Mantenha apenas este import.
 
 export interface ChatMessage {
   user: string;
