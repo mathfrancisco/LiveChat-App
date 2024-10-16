@@ -19,7 +19,7 @@ public class WebSocketConfig extends AbstractSecurityWebSocketMessageBrokerConfi
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/buildrun-livechat-websocket")
+        registry.addEndpoint("/livechat-websocket")
                 .setAllowedOrigins("*")
                 .withSockJS();
     }
