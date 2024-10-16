@@ -1,0 +1,46 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <h2 class="text-center mb-4">Live Chat</h2>
+
+      <div *ngIf="!connected" class="card bg-dark text-light">
+        <div class="card-body">
+          <form (ngSubmit)="connect()">
+            <div class="mb-3">
+              <label for="username" class="form-label">Usuário:</label>
+              <input type="text" id="username" class="form-control" [(ngModel)]="username" name="username" required placeholder="Enter your username">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Join Chat</button>
+          </form>
+        </div>
+      </div>
+
+      <div *ngIf="connected" class="chat-box">
+        <div class="chat-messages mb-3">
+          <ul class="list-unstyled">
+            <li *ngFor="let msg of messages" [ngClass]="{'text-center': msg.type !== 'CHAT'}">
+              <div *ngIf="msg.type === 'CHAT'" class="message-content">
+                <span class="username">{{ msg.user }}:</span>
+                <span class="message">{{ msg.content }}</span>
+                <small class="text-muted time">{{ msg.time }}</small>
+              </div>
+              <div *ngIf="msg.type !== 'CHAT'" class="system-content">
+                {{ msg.content }}
+                <small class="text-muted time">{{ msg.time }}</small>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <form (ngSubmit)="sendMessage()" class="mb-3">
+          <div class="input-group">
+            <input type="text" class="form-control" [(ngModel)]="message" name="message" required placeholder="Digite uma mensagem...">
+            <button class="btn btn-primary" type="submit">Send</button>
+          </div>
+        </form>
+
+        <button class="btn btn-danger w-100" (click)="disconnect()">Sair do Chat</button>
+      </div>
+    </div>
+  </div>
+</div>

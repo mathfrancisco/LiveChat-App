@@ -1,0 +1,85 @@
+body {
+  background-color: #171831;
+  color: #ffffff;
+  font-family: 'Arial', sans-serif;
+}
+
+.container {
+  background-color: #1f2044;
+  border-radius: 12px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+}
+
+h2 {
+  color: #6968d4;
+}
+
+.chat-box {
+  background-color: #2f3055;
+  border: 1px solid #6968d4;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.chat-messages {
+  height: 400px;
+  overflow-y: auto;
+}
+
+.message-content {
+  background-color: #3a3b66;
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin-bottom: 10px;
+}
+
+.system-content {
+  background-color: #4a4b76;
+  color: #e0e0e0;
+  border-radius: 8px;
+  padding: 5px 10px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.username {
+  font-weight: bold;
+  margin-right: 10px;
+  color: #6968d4;
+}
+
+.time {
+  font-size: 0.8em;
+  margin-left: 10px;
+}
+
+.form-control {
+  background-color: #2f3055;
+  border-color: #6968d4;
+  color: white;
+}
+
+.form-control::placeholder {
+  color: #a9a9a9;
+}
+
+.btn-primary {
+  background-color: #6968d4;
+  border-color: #6968d4;
+}
+
+.btn-primary:hover {
+  background-color: #5756b8;
+  border-color: #5756b8;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
