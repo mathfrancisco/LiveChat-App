@@ -10,7 +10,6 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer {
-
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic");
@@ -20,17 +19,12 @@ public class WebSocketConfig extends AbstractSecurityWebSocketMessageBrokerConfi
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/livechat-websocket")
-                .setAllowedOrigins("*")
-                .withSockJS();
+                .setAllowedOrigins("http://localhost:4200"); // Especifique a origem do seu frontend
     }
 
     @Override
     protected void configureInbound(MessageSecurityMetadataSourceRegistry messages) {
-        messages
-                .nullDestMatcher().authenticated()
-                .simpDestMatchers("/app/**").authenticated()
-                .simpSubscribeDestMatchers("/topic/**").authenticated()
-                .anyMessage().denyAll();
+        messages.anyMessage().permitAll();
     }
 
     @Override
