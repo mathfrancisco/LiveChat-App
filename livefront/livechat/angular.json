@@ -21,7 +21,9 @@
               "src/polyfills.ts"
             ],
             "allowedCommonJsDependencies": [
+              "@stomp/stompjs",
               "sockjs-client"
+          
             ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
