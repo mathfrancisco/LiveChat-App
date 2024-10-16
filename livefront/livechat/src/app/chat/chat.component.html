@@ -9,26 +9,26 @@
           <form #loginForm="ngForm" (ngSubmit)="connect()">
             <div class="mb-3">
               <label for="username" class="form-label">Usuário:</label>
-              <input 
-                type="text" 
-                id="username" 
-                class="form-control" 
-                [(ngModel)]="username" 
-                name="username" 
-                required 
+              <input
+                type="text"
+                id="username"
+                class="form-control"
+                [(ngModel)]="username"
+                name="username"
+                required
                 placeholder="Enter your username"
                 (keypress)="handleKeyPress($event, loginForm)"
                 [disabled]="connecting"
               >
             </div>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               class="btn btn-primary w-100"
-              [disabled]="!username?.trim() || connecting"
+              [disabled]="!username.trim() || connecting"
             >
               {{ connecting ? 'Conectando...' : 'Join Chat' }}
             </button>
-            
+
             <!-- Error Message -->
             <div *ngIf="connectionError" class="alert alert-danger mt-3" role="alert">
               {{ connectionError }}
@@ -44,13 +44,12 @@
           <ul class="list-unstyled">
             <li *ngFor="let msg of messages" [ngClass]="{'text-center': msg.type !== 'CHAT'}">
               <!-- Regular Chat Message -->
-              <div *ngIf="msg.type === 'CHAT'" class="message-content"
-                   [ngClass]="{'own-message': isOwnMessage(msg)}">
+              <div *ngIf="msg.type === 'CHAT'" class="message-content" [ngClass]="{'own-message': isOwnMessage(msg)}">
                 <span class="username">{{ msg.user }}:</span>
                 <span class="message">{{ msg.content }}</span>
                 <small class="text-muted time">{{ formatTime(msg.time) }}</small>
               </div>
-              
+
               <!-- System Message -->
               <div *ngIf="msg.type !== 'CHAT'" class="system-content">
                 {{ msg.content }}
@@ -63,20 +62,20 @@
         <!-- Message Input Form -->
         <form #messageForm="ngForm" (ngSubmit)="sendMessage()" class="mb-3">
           <div class="input-group">
-            <input 
-              type="text" 
-              class="form-control" 
-              [(ngModel)]="message" 
-              name="message" 
-              required 
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="message"
+              name="message"
+              required
               placeholder="Digite uma mensagem..."
               (keypress)="handleKeyPress($event, messageForm)"
               [disabled]="!connected"
             >
-            <button 
-              class="btn btn-primary" 
+            <button
+              class="btn btn-primary"
               type="submit"
-              [disabled]="!message?.trim() || !connected"
+              [disabled]="!message.trim() || !connected"
             >
               <i class="bi bi-send"></i> Send
             </button>
@@ -84,8 +83,8 @@
         </form>
 
         <!-- Disconnect Button -->
-        <button 
-          class="btn btn-danger w-100" 
+        <button
+          class="btn btn-danger w-100"
           (click)="disconnect()"
           [disabled]="!connected"
         >

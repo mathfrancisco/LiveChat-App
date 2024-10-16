@@ -1,7 +1,8 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ChatService, ChatMessage } from './service/chat.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { NgForm } from '@angular/forms';
 
 @Component({
   selector: 'app-chat',
@@ -9,8 +10,11 @@ import { takeUntil } from 'rxjs/operators';
   styleUrls: ['./chat.component.css']
 })
 export class ChatComponent implements OnInit, OnDestroy {
+  @ViewChild('chatMessages') private messagesContainer!: ElementRef;
+  @ViewChild('messageForm') private messageForm!: NgForm;
+
   private destroy$ = new Subject<void>();
-  
+
   connected = false;
   connecting = false;
   connectionError = '';
@@ -25,6 +29,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(messages => {
         this.messages = messages;
+        this.scrollToBottom();
       });
 
     this.chatService.connectionStatus$
@@ -40,6 +45,39 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
     this.disconnect();
+  }
+
+  handleKeyPress(event: KeyboardEvent, form: NgForm) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      if (form.valid) {
+        if (form === this.messageForm) {
+          this.sendMessage();
+        } else {
+          this.connect();
+        }
+      }
+    }
+  }
+
+  isOwnMessage(message: ChatMessage): boolean {
+    return message.user === this.username;
+  }
+
+  formatTime(time: string): string {
+    return new Date(time).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  private scrollToBottom(): void {
+    setTimeout(() => {
+      if (this.messagesContainer) {
+        const element = this.messagesContainer.nativeElement;
+        element.scrollTop = element.scrollHeight;
+      }
+    });
   }
 
   connect() {
@@ -72,7 +110,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (!this.message.trim()) {
       return;
     }
-    
+
     this.chatService.sendMessage(this.username, this.message);
     this.message = '';
   }
