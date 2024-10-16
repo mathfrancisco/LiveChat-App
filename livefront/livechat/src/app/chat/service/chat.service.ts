@@ -21,7 +21,7 @@ export class ChatService {
   constructor() {
     this.client = new Client({
       webSocketFactory: () => {
-        return new SockJS('/building-livechat-websocket') as IStompSocket;
+        return new SockJS('/livechat-websocket') as IStompSocket;
       },
       debug: (str) => {
         console.log(str);
