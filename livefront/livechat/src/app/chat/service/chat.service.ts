@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Client, IStompSocket } from '@stomp/stompjs';
-import * as SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
 
 export interface ChatMessage {
   user: string;
@@ -30,9 +29,7 @@ export class ChatService {
 
   constructor() {
     this.client = new Client({
-      webSocketFactory: () => {
-        return new SockJS('http://localhost:8080/livechat-websocket') as IStompSocket;
-      },
+      brokerURL: 'ws://localhost:8080/livechat-websocket',
       debug: (str) => {
         console.log(str);
       },
