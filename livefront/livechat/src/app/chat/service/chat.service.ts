@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';  // Mantenha apenas este import.
 
 export interface ChatMessage {
   user: string;
@@ -29,7 +30,7 @@ export class ChatService {
 
   constructor() {
     this.client = new Client({
-      brokerURL: 'ws://localhost:8080/livechat-websocket',
+      webSocketFactory: () => new SockJS('http://localhost:8080/livechat-websocket'),
       debug: (str) => {
         console.log(str);
       },
@@ -43,9 +44,13 @@ export class ChatService {
       this.connectionStatusSubject.next({ connected: true });
 
       this.client.subscribe('/topic/public', message => {
-        const chatMessage: ChatMessage = JSON.parse(message.body);
-        const currentMessages = this.messagesSubject.value;
-        this.messagesSubject.next([...currentMessages, chatMessage]);
+        try {
+          const chatMessage: ChatMessage = JSON.parse(message.body);
+          const currentMessages = this.messagesSubject.value;
+          this.messagesSubject.next([...currentMessages, chatMessage]);
+        } catch (error) {
+          console.error('Error parsing message:', error);
+        }
       });
     };
 
@@ -54,7 +59,15 @@ export class ChatService {
       console.error('Additional details: ' + frame.body);
       this.connectionStatusSubject.next({
         connected: false,
-        error: frame.headers['message']
+        error: 'Connection failed: ' + frame.headers['message']
+      });
+    };
+
+    this.client.onWebSocketError = (error) => {
+      console.error('WebSocket error:', error);
+      this.connectionStatusSubject.next({
+        connected: false,
+        error: 'WebSocket connection failed'
       });
     };
   }
@@ -62,10 +75,17 @@ export class ChatService {
   connect(): Observable<void> {
     return new Observable(subscriber => {
       try {
+        if (this.client.connected) {
+          subscriber.next();
+          subscriber.complete();
+          return;
+        }
+
         this.client.activate();
         subscriber.next();
         subscriber.complete();
       } catch (error) {
+        console.error('Connection error:', error);
         subscriber.error(error);
       }
     });
