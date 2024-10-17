@@ -1,103 +1,93 @@
-<div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <h2 class="text-center mb-4">Live Chat</h2>
+<div class="container">
+  <h2 class="text-center mb-4">Live Chat</h2>
 
-      <!-- Login Form -->
-      <div *ngIf="!connected" class="card bg-dark text-light">
-        <div class="card-body">
-          <form #loginForm="ngForm" (ngSubmit)="connect()">
-            <div class="mb-3">
-              <label for="username" class="form-label">Usuário:</label>
-              <input
-                type="text"
-                id="username"
-                class="form-control"
-                [(ngModel)]="username"
-                name="username"
-                required
-                placeholder="Enter your username"
-                (keypress)="handleKeyPress($event, loginForm)"
-                [disabled]="connecting"
-              >
-            </div>
-            <button
-              type="submit"
-              class="btn btn-primary w-100"
-              [disabled]="!username.trim() || connecting"
-            >
-              {{ connecting ? 'Conectando...' : 'Conecte no Chat' }}
-            </button>
-
-            <!-- Error Message -->
-            <div *ngIf="connectionError" class="alert alert-danger mt-3" role="alert">
-              {{ connectionError }}
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Chat Box -->
-      <div *ngIf="connected" class="chat-box">
-        <!-- Messages Container -->
-        <div #chatMessages class="chat-messages mb-3">
-          <ul class="list-unstyled">
-            <li *ngFor="let msg of messages" [ngClass]="{'text-center': msg.type !== 'CHAT'}">
-              <!-- Regular Chat Message -->
-              <div *ngIf="msg.type === 'CHAT'" class="message-content" [ngClass]="{'own-message': isOwnMessage(msg)}">
-                <span class="username">{{ msg.user }}:</span>
-                <span class="message">{{ msg.content }}</span>
-                <small class="text-muted time">{{ formatTime(msg.time) }}</small>
-              </div>
-
-              <!-- System Message -->
-              <div *ngIf="msg.type !== 'CHAT'" class="system-content">
-                {{ msg.content }}
-                <small class="text-muted time">{{ formatTime(msg.time) }}</small>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Message Input Form -->
-        <form #messageForm="ngForm" (ngSubmit)="sendMessage()" class="mb-3">
-          <div class="input-group">
-            <input
-              type="text"
-              class="form-control"
-              [(ngModel)]="message"
-              name="message"
-              required
-              placeholder="Digite uma mensagem..."
-              (keypress)="handleKeyPress($event, messageForm)"
-              [disabled]="!connected"
-            >
-            <button
-              class="btn btn-primary"
-              type="submit"
-              [disabled]="!message.trim() || !connected"
-            >
-              <i class="bi bi-send"></i> Send
-            </button>
-          </div>
-        </form>
-
-        <!-- Disconnect Button -->
-        <button
-          class="btn btn-danger w-100"
-          (click)="disconnect()"
-          [disabled]="!connected"
+  <!-- Login Form - Show when not connected -->
+  <div *ngIf="!connected" class="login-form mb-4">
+    <form #loginForm="ngForm" (keydown)="handleKeyPress($event, loginForm)">
+      <div class="form-group">
+        <label for="username">Username:</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="form-control"
+          [(ngModel)]="username"
+          required
+          [disabled]="connecting"
+          placeholder="Enter your username"
         >
-          <i class="bi bi-box-arrow-right"></i> Sair do Chat
-        </button>
       </div>
-    </div>
+
+      <button
+        type="button"
+        class="btn btn-primary w-100 mt-3"
+        (click)="connect()"
+        [disabled]="!username.trim() || connecting"
+      >
+        {{ connecting ? 'Connecting...' : 'Join Chat' }}
+      </button>
+
+      <div *ngIf="connectionError" class="alert alert-danger mt-3">
+        {{ connectionError }}
+      </div>
+    </form>
   </div>
 
-  <!-- Reconnecting Alert -->
-  <div *ngIf="connecting && connected" class="position-fixed bottom-0 end-0 p-3">
-    <div class="alert alert-warning" role="alert">
-      Reconectando ao chat...
+  <!-- Chat Interface - Show when connected -->
+  <div *ngIf="connected" class="chat-box">
+    <!-- Messages Container -->
+    <div #chatMessages class="chat-messages mb-3">
+      <div *ngFor="let msg of messages" class="message-wrapper">
+        <div [class]="'message-content ' + (isOwnMessage(msg) ? 'own-message' : '')">
+          <div class="d-flex justify-content-between align-items-start">
+            <span class="username">{{ msg.user }}</span>
+            <span class="time">{{ formatTime(msg.time) }}</span>
+          </div>
+          <div class="message-text">
+            {{ msg.content }}
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- Message Input Form -->
+    <form #messageForm="ngForm" (keydown)="handleKeyPress($event, messageForm)" class="message-input-form">
+      <div class="input-group">
+        <input
+          type="text"
+          class="form-control"
+          name="message"
+          [(ngModel)]="message"
+          placeholder="Type your message..."
+          required
+        >
+        <div class="input-group-append">
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="sendMessage()"
+            [disabled]="!message.trim()"
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Disconnect Button -->
+    <button
+      type="button"
+      class="btn btn-danger w-100 mt-3"
+      (click)="disconnect()"
+    >
+      Leave Chat
+    </button>
+  </div>
+</div>
+
+<!-- Reconnection Dialog -->
+<div *ngIf="connecting && connected" class="reconnection-dialog">
+  <div class="alert alert-warning text-center">
+    Reconnecting to chat...
   </div>
 </div>

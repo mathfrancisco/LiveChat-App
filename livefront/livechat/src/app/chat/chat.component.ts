@@ -62,11 +62,19 @@ export class ChatComponent implements OnInit, OnDestroy {
     return message.user === this.username;
   }
 
-  formatTime(time: string): string {
-    return new Date(time).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  formatTime(time: string | undefined): string {
+    if (!time) {
+      return '';
+    }
+    try {
+      return new Date(time).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return '';
+    }
   }
 
   private scrollToBottom(): void {
