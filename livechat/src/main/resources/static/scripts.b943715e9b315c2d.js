@@ -1,0 +1,1 @@
+var win;win=typeof window<"u"?window:typeof global<"u"?global:typeof self<"u"?self:{},module.exports=win;

@@ -12,7 +12,10 @@
   },
   "browser": {
     "crypto": false,
-    "stream": false
+    "stream": false,
+    "global": false
+
+
   },
   "private": true,
   "dependencies": {
