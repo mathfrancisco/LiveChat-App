@@ -1,119 +1,39 @@
-import { Component, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { ChatService, ChatMessage } from './service/chat.service';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { NgForm } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
+import { ChatService } from './chat.service';
 
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
 })
-export class ChatComponent implements OnInit, OnDestroy {
-  @ViewChild('chatMessages') private messagesContainer!: ElementRef;
-  @ViewChild('messageForm') private messageForm!: NgForm;
-  private destroy$ = new Subject<void>();
+export class ChatComponent implements OnInit {
   connected = false;
-  connecting = false;
-  connectionError = '';
-  username = '';
+  user = '';
   message = '';
-  messages: ChatMessage[] = [];
+  chatMessages: string[] = [];
 
   constructor(private chatService: ChatService) {}
 
   ngOnInit() {
-    this.chatService.messages$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(messages => {
-        this.messages = messages;
-        this.scrollToBottom();
-      });
-
-    this.chatService.connectionStatus$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(status => {
-        this.connected = status.connected;
-        this.connectionError = status.error || '';
-        this.connecting = false;
-      });
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-    this.disconnect();
-  }
-
-  handleKeyPress(event: KeyboardEvent, form: NgForm) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      if (form.valid) {
-        if (form === this.messageForm) {
-          this.sendMessage();
-        } else {
-          this.connect();
-        }
-      }
-    }
-  }
-
-  isOwnMessage(message: ChatMessage): boolean {
-    return message.user === this.username;
-  }
-
-  formatTime(time: string | undefined): string {
-    if (!time) {
-      return '';
-    }
-    try {
-      return new Date(time).toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      console.error('Error formatting time:', error);
-      return '';
-    }
-  }
-
-  private scrollToBottom(): void {
-    setTimeout(() => {
-      if (this.messagesContainer) {
-        const element = this.messagesContainer.nativeElement;
-        element.scrollTop = element.scrollHeight;
-      }
+    this.chatService.messages$.subscribe(message => {
+      this.chatMessages.push(message);
     });
   }
 
   connect() {
-    if (!this.username.trim() || this.connecting) {
-      return;
-    }
-    this.connecting = true;
-    this.connectionError = '';
-    this.chatService.connect().subscribe({
-      next: () => {
-        this.connecting = false;
-        this.chatService.joinChat(this.username);
-      },
-      complete: () => {
-        this.connecting = false;
-      }
-    });
+    this.chatService.connect();
+    this.connected = true;
   }
 
   disconnect() {
     this.chatService.disconnect();
-    this.message = '';
     this.connected = false;
   }
 
   sendMessage() {
-    if (!this.message.trim()) {
-      return;
+    if (this.user && this.message) {
+      this.chatService.sendMessage(this.user, this.message);
+      this.message = '';
     }
-    this.chatService.sendMessage(this.username, this.message);
-    this.message = '';
   }
 }
