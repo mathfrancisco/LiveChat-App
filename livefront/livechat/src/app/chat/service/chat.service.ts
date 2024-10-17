@@ -24,18 +24,17 @@ export class ChatService {
   private connectionStatusSubject = new BehaviorSubject<ConnectionStatus>({ connected: false });
 
   constructor() {
-    this.client = new Client({
-      webSocketFactory: () => new SockJS('http://' + window.location.host + '/livechat-websocket'),
-      debug: (str) => {
-        console.log(str);
-      },
-      reconnectDelay: 5000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
-    });
-
-    this.initializeClientHandlers();
-  }
+  this.client = new Client({
+    webSocketFactory: () => new SockJS('/livechat-websocket'), // Modificado aqui
+    debug: (str) => {
+      console.log(str);
+    },
+    reconnectDelay: 5000,
+    heartbeatIncoming: 4000,
+    heartbeatOutgoing: 4000,
+  });
+  this.initializeClientHandlers();
+}
 
   private initializeClientHandlers(): void {
     this.client.onConnect = (frame) => {
