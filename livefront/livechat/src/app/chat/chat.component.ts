@@ -79,23 +79,21 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   connect() {
-    if (!this.username.trim() || this.connecting) {
-      return;
-    }
-    this.connecting = true;
-    this.connectionError = '';
-    this.chatService.connect().subscribe({
-      next: () => {
-        this.connected = true;
-        this.chatService.joinChat(this.username);
-      },
-      error: (error) => {
-        this.connecting = false;
-        this.connectionError = 'Failed to connect. Please try again.';
-        console.error('Connection error:', error);
-      }
-    });
+  if (!this.username.trim() || this.connecting) {
+    return;
   }
+  this.connecting = true;
+  this.connectionError = '';
+  this.chatService.connect().subscribe({
+    next: () => {
+      this.connecting = false;
+      this.chatService.joinChat(this.username);
+    },
+    complete: () => {
+      this.connecting = false;
+    }
+  });
+}
 
   disconnect() {
     this.chatService.disconnect();
