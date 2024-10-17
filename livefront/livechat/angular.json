@@ -23,7 +23,6 @@
             "allowedCommonJsDependencies": [
               "@stomp/stompjs",
               "sockjs-client"
-          
             ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
@@ -66,6 +65,10 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "livechat:build",
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
               "browserTarget": "livechat:build:production"
@@ -102,5 +105,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

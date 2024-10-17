@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
+import * as SockJS from 'sockjs-client';
 
 export interface ChatMessage {
   user: string;
@@ -10,88 +10,58 @@ export interface ChatMessage {
   type: string;
 }
 
-export interface ConnectionStatus {
-  connected: boolean;
-  error?: string;
-}
-
 @Injectable({
   providedIn: 'root'
 })
 export class ChatService {
   private client: Client;
   private messagesSubject = new BehaviorSubject<ChatMessage[]>([]);
-  private connectionStatusSubject = new BehaviorSubject<ConnectionStatus>({ connected: false });
+  private serverUrl = 'http://localhost:5000/ws'; // Updated WebSocket endpoint
 
   constructor() {
     this.client = new Client({
-      webSocketFactory: () => new SockJS('http://' + window.location.host + '/livechat-websocket'),
+      webSocketFactory: () => {
+        return new SockJS(this.serverUrl);
+      },
       debug: (str) => {
-        console.log(str);
+        console.log('STOMP Debug:', str);
       },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
-    });
-
-    this.initializeClientHandlers();
-  }
-
-  private initializeClientHandlers(): void {
-    this.client.onConnect = (frame) => {
-      console.log('Connected: ' + frame);
-      this.connectionStatusSubject.next({ connected: true, error: undefined }); // Clear any previous error
-
-      // Subscribe to the live chat topic
-      this.client.subscribe('/topic/public', message => {
-        try {
-          const chatMessage: ChatMessage = JSON.parse(message.body);
-          const currentMessages = this.messagesSubject.value;
-          this.messagesSubject.next([...currentMessages, chatMessage]);
-        } catch (error) {
-          console.error('Error parsing message:', error);
-        }
-      });
-    };
-
-    this.client.onStompError = (frame) => {
-      console.error('Broker reported error: ' + frame.headers['message']);
-      console.error('Additional details: ' + frame.body);
-      this.connectionStatusSubject.next({
-        connected: false,
-        error: 'Connection failed: ' + frame.headers['message']
-      });
-    };
-
-    this.client.onWebSocketError = (error) => {
-      console.error('WebSocket error:', error);
-      this.connectionStatusSubject.next({
-        connected: false,
-        error: 'WebSocket connection failed'
-      });
-    };
-  }
-
-  connect(): Observable<void> {
-    return new Observable(subscriber => {
-      if (this.client.connected) {
-        subscriber.next();
-        subscriber.complete();
-        return;
+      onConnect: () => {
+        console.log('Connected to WebSocket!');
+        this.subscribeToPublicMessages();
+      },
+      onStompError: (frame) => {
+        console.error('STOMP error:', frame);
       }
-
-      this.client.activate();
-      subscriber.next();
-      subscriber.complete();
     });
+  }
+
+  private subscribeToPublicMessages(): void {
+    this.client.subscribe('/topic/public', message => {
+      try {
+        const chatMessage: ChatMessage = JSON.parse(message.body);
+        const currentMessages = this.messagesSubject.value;
+        this.messagesSubject.next([...currentMessages, chatMessage]);
+      } catch (error) {
+        console.error('Error parsing message:', error);
+      }
+    });
+  }
+
+  connect(): void {
+    try {
+      console.log('Attempting to connect to:', this.serverUrl);
+      this.client.activate();
+    } catch (error) {
+      console.error('Connection error:', error);
+    }
   }
 
   disconnect(): void {
-    if (this.client.connected) {
-      this.client.deactivate();
-      this.connectionStatusSubject.next({ connected: false });
-      this.messagesSubject.next([]);
-    }
+    this.client.deactivate();
   }
 
   sendMessage(user: string, message: string): void {
@@ -100,26 +70,12 @@ export class ChatService {
         destination: "/app/new-message",
         body: JSON.stringify({ user, message })
       });
-    }
-  }
-
-  joinChat(username: string): void {
-    if (this.client.connected) {
-      console.log(`User ${username} is joining the chat.`);
-      this.client.publish({
-        destination: "/app/chat.addUser",
-        body: JSON.stringify({ user: username, message: null })
-      });
     } else {
-      console.error('Cannot join chat, not connected.');
+      console.error('Not connected to WebSocket');
     }
   }
 
   get messages$(): Observable<ChatMessage[]> {
     return this.messagesSubject.asObservable();
-  }
-
-  get connectionStatus$(): Observable<ConnectionStatus> {
-    return this.connectionStatusSubject.asObservable();
   }
 }

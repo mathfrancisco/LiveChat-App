@@ -1,19 +1,15 @@
-import { Component, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { ChatService, ChatMessage } from './service/chat.service';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { NgForm } from '@angular/forms';
+import { ChatService, ChatMessage } from './service/chat.service';
 
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
 })
-export class ChatComponent implements OnInit, OnDestroy {
+export class ChatComponent implements OnInit {
   @ViewChild('chatMessages') private messagesContainer!: ElementRef;
   @ViewChild('messageForm') private messageForm!: NgForm;
-
-  private destroy$ = new Subject<void>();
 
   connected = false;
   connecting = false;
@@ -25,28 +21,35 @@ export class ChatComponent implements OnInit, OnDestroy {
   constructor(private chatService: ChatService) {}
 
   ngOnInit() {
-    // Subscribe to messages from the chat service
-    this.chatService.messages$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(messages => {
-        this.messages = messages;
-        this.scrollToBottom();
-      });
-
-    // Subscribe to connection status
-    this.chatService.connectionStatus$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(status => {
-        this.connected = status.connected;
-        this.connectionError = status.error || '';
-        this.connecting = false; // Reset connecting state on status change
-      });
+    this.chatService.messages$.subscribe(messages => {
+      this.messages = messages;
+      this.scrollToBottom();
+    });
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-    this.disconnect(); // Ensure disconnection on component destruction
+  connect() {
+    if (!this.username.trim() || this.connecting) {
+      return;
+    }
+    this.connecting = true;
+    this.connectionError = '';
+    this.chatService.connect();
+    this.connected = true;
+    this.connecting = false;
+    // Add error handling here if needed
+  }
+
+  disconnect() {
+    this.chatService.disconnect();
+    this.connected = false;
+    this.messages = [];
+  }
+
+  sendMessage() {
+    if (this.message.trim() && this.connected) {
+      this.chatService.sendMessage(this.username, this.message);
+      this.message = '';
+    }
   }
 
   handleKeyPress(event: KeyboardEvent, form: NgForm) {
@@ -63,7 +66,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   isOwnMessage(message: ChatMessage): boolean {
-    return message.user === this.username; // Check if the message is sent by the user
+    return message.user === this.username;
   }
 
   formatTime(time: string): string {
@@ -77,46 +80,8 @@ export class ChatComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       if (this.messagesContainer) {
         const element = this.messagesContainer.nativeElement;
-        element.scrollTop = element.scrollHeight; // Scroll to the bottom of chat messages
+        element.scrollTop = element.scrollHeight;
       }
     });
-  }
-
-  connect() {
-    if (!this.username.trim() || this.connecting) {
-      return; // Prevent connecting if username is empty or already connecting
-    }
-
-    this.connecting = true;
-    this.connectionError = '';
-
-    // Attempt to connect using chat service
-    this.chatService.connect().subscribe({
-      next: () => {
-        this.connected = true; // Update connection state
-        this.chatService.joinChat(this.username); // Notify chat service of new user
-      },
-      error: (error) => {
-        this.connecting = false;
-        this.connectionError = 'Failed to connect. Please try again.';
-        console.error('Connection error:', error);
-      }
-    });
-  }
-
-  disconnect() {
-    this.chatService.disconnect(); // Disconnect from chat service
-    this.message = ''; // Clear message input
-    this.connected = false; // Update connection state
-  }
-
-  sendMessage() {
-    if (!this.message.trim()) {
-      return; // Prevent sending empty messages
-    }
-
-    // Send message through chat service
-    this.chatService.sendMessage(this.username, this.message);
-    this.message = ''; // Clear message input after sending
   }
 }
