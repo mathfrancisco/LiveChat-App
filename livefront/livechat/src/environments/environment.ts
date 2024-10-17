@@ -1,5 +1,5 @@
 export const environment = {
-  production: true,
-  wsEndpoint: '/livechat-websocket',
-  apiUrl: '/app'
+  production: false,
+  wsEndpoint: 'ws://localhost:5000/livechat-websocket',
+  apiUrl: 'http://localhost:5000/app'
 };
