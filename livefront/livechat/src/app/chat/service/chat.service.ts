@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { Client } from '@stomp/stompjs';
 
 export interface ChatMessage {
   user: string;
@@ -17,57 +18,61 @@ export interface ConnectionStatus {
   providedIn: 'root'
 })
 export class ChatService {
-  private socket: WebSocket | null = null;
+  private client: Client;
   private messagesSubject = new BehaviorSubject<ChatMessage[]>([]);
   private connectionStatusSubject = new BehaviorSubject<ConnectionStatus>({ connected: false });
 
-  constructor() {}
+  constructor() {
+    this.client = new Client({
+      brokerURL: `ws://${window.location.host}/livechat-websocket`,
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+    });
+
+    this.client.onConnect = (frame) => {
+      console.log('Connected: ' + frame);
+      this.connectionStatusSubject.next({ connected: true });
+      this.client.subscribe('/topics/livechat', message => {
+        const chatMessage: ChatMessage = JSON.parse(message.body);
+        const currentMessages = this.messagesSubject.value;
+        this.messagesSubject.next([...currentMessages, chatMessage]);
+      });
+    };
+
+    this.client.onDisconnect = () => {
+      console.log('Disconnected');
+      this.connectionStatusSubject.next({ connected: false });
+    };
+
+    this.client.onStompError = (frame) => {
+      console.error('Broker reported error: ' + frame.headers['message']);
+      this.connectionStatusSubject.next({ connected: false, error: 'STOMP error' });
+    };
+  }
 
   connect(): Observable<void> {
     return new Observable<void>(observer => {
-      this.socket = new WebSocket(`ws://${window.location.host}/livechat-websocket`);
-
-      this.socket.onopen = () => {
-        console.log("WebSocket is open now.");
-        this.connectionStatusSubject.next({ connected: true });
-        observer.next();
-        observer.complete();
-      };
-
-      this.socket.onmessage = (event) => {
-        const chatMessage: ChatMessage = JSON.parse(event.data);
-        const currentMessages = this.messagesSubject.value;
-        this.messagesSubject.next([...currentMessages, chatMessage]);
-      };
-
-      this.socket.onclose = () => {
-        console.log("WebSocket is closed now.");
-        this.connectionStatusSubject.next({ connected: false });
-      };
-
-      this.socket.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        this.connectionStatusSubject.next({ connected: false, error: 'WebSocket connection failed' });
-        observer.error(error);
-      };
+      this.client.activate();
+      observer.next();
+      observer.complete();
     });
   }
 
   disconnect(): void {
-    if (this.socket) {
-      this.socket.close();
-      this.socket = null;
-      this.connectionStatusSubject.next({ connected: false });
-      this.messagesSubject.next([]);
-    }
+    this.client.deactivate();
+    this.messagesSubject.next([]);
   }
 
   sendMessage(user: string, message: string): void {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+    if (this.client.connected) {
       const chatMessage: ChatMessage = { user, content: message };
-      this.socket.send(JSON.stringify(chatMessage));
+      this.client.publish({
+        destination: '/app/new-message',
+        body: JSON.stringify(chatMessage)
+      });
     } else {
-      console.error("WebSocket is not open. Message not sent.");
+      console.error("STOMP client is not connected. Message not sent.");
     }
   }
 
