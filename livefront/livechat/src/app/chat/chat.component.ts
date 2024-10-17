@@ -1,16 +1,18 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ChatService, ChatMessage } from './service/chat.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { NgForm } from '@angular/forms';
 
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
 })
-export class ChatComponent implements OnInit {
+export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('chatMessages') private messagesContainer!: ElementRef;
   @ViewChild('messageForm') private messageForm!: NgForm;
-
+  private destroy$ = new Subject<void>();
   connected = false;
   connecting = false;
   connectionError = '';
@@ -21,35 +23,26 @@ export class ChatComponent implements OnInit {
   constructor(private chatService: ChatService) {}
 
   ngOnInit() {
-    this.chatService.messages$.subscribe(messages => {
-      this.messages = messages;
-      this.scrollToBottom();
-    });
+    this.chatService.messages$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(messages => {
+        this.messages = messages;
+        this.scrollToBottom();
+      });
+
+    this.chatService.connectionStatus$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(status => {
+        this.connected = status.connected;
+        this.connectionError = status.error || '';
+        this.connecting = false;
+      });
   }
 
-  connect() {
-    if (!this.username.trim() || this.connecting) {
-      return;
-    }
-    this.connecting = true;
-    this.connectionError = '';
-    this.chatService.connect();
-    this.connected = true;
-    this.connecting = false;
-    // Add error handling here if needed
-  }
-
-  disconnect() {
-    this.chatService.disconnect();
-    this.connected = false;
-    this.messages = [];
-  }
-
-  sendMessage() {
-    if (this.message.trim() && this.connected) {
-      this.chatService.sendMessage(this.username, this.message);
-      this.message = '';
-    }
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.disconnect();
   }
 
   handleKeyPress(event: KeyboardEvent, form: NgForm) {
@@ -83,5 +76,36 @@ export class ChatComponent implements OnInit {
         element.scrollTop = element.scrollHeight;
       }
     });
+  }
+
+  connect() {
+    if (!this.username.trim() || this.connecting) {
+      return;
+    }
+    this.connecting = true;
+    this.connectionError = '';
+    this.chatService.connect().subscribe({
+      next: () => {
+        this.connecting = false;
+        this.chatService.joinChat(this.username);
+      },
+      complete: () => {
+        this.connecting = false;
+      }
+    });
+  }
+
+  disconnect() {
+    this.chatService.disconnect();
+    this.message = '';
+    this.connected = false;
+  }
+
+  sendMessage() {
+    if (!this.message.trim()) {
+      return;
+    }
+    this.chatService.sendMessage(this.username, this.message);
+    this.message = '';
   }
 }

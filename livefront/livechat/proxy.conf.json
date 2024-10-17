@@ -1,18 +1,11 @@
 {
-  "/livechat-websocket/*": {
-    "target": "http://localhost:5000",
-    "secure": false,
-    "ws": true,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/topic/*": {
+  "/livechat-websocket": {
     "target": "http://localhost:5000",
     "secure": false,
     "ws": true,
     "changeOrigin": true
   },
-  "/app/*": {
+  "/app": {
     "target": "http://localhost:5000",
     "secure": false,
     "changeOrigin": true

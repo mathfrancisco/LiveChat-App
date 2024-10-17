@@ -1,13 +1,17 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Client } from '@stomp/stompjs';
-import * as SockJS from 'sockjs-client';
 
 export interface ChatMessage {
   user: string;
   content: string;
-  time: string;
-  type: string;
+  time?: string;
+  type?: string;
+}
+
+export interface ConnectionStatus {
+  connected: boolean;
+  error?: string;
 }
 
 @Injectable({
@@ -16,66 +20,72 @@ export interface ChatMessage {
 export class ChatService {
   private client: Client;
   private messagesSubject = new BehaviorSubject<ChatMessage[]>([]);
-  private serverUrl = 'http://localhost:5000/ws'; // Updated WebSocket endpoint
+  private connectionStatusSubject = new BehaviorSubject<ConnectionStatus>({ connected: false });
 
   constructor() {
     this.client = new Client({
-      webSocketFactory: () => {
-        return new SockJS(this.serverUrl);
-      },
-      debug: (str) => {
-        console.log('STOMP Debug:', str);
-      },
+      brokerURL: `ws://${window.location.host}/livechat-websocket`,
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
-      onConnect: () => {
-        console.log('Connected to WebSocket!');
-        this.subscribeToPublicMessages();
-      },
-      onStompError: (frame) => {
-        console.error('STOMP error:', frame);
-      }
     });
-  }
 
-  private subscribeToPublicMessages(): void {
-    this.client.subscribe('/topic/public', message => {
-      try {
+    this.client.onConnect = (frame) => {
+      console.log('Connected: ' + frame);
+      this.connectionStatusSubject.next({ connected: true });
+      this.client.subscribe('/topics/livechat', message => {
         const chatMessage: ChatMessage = JSON.parse(message.body);
         const currentMessages = this.messagesSubject.value;
         this.messagesSubject.next([...currentMessages, chatMessage]);
-      } catch (error) {
-        console.error('Error parsing message:', error);
-      }
-    });
+      });
+    };
+
+    this.client.onDisconnect = () => {
+      console.log('Disconnected');
+      this.connectionStatusSubject.next({ connected: false });
+    };
+
+    this.client.onStompError = (frame) => {
+      console.error('Broker reported error: ' + frame.headers['message']);
+      this.connectionStatusSubject.next({ connected: false, error: 'STOMP error' });
+    };
   }
 
-  connect(): void {
-    try {
-      console.log('Attempting to connect to:', this.serverUrl);
+  connect(): Observable<void> {
+    return new Observable<void>(observer => {
       this.client.activate();
-    } catch (error) {
-      console.error('Connection error:', error);
-    }
+      observer.next();
+      observer.complete();
+    });
   }
 
   disconnect(): void {
     this.client.deactivate();
+    this.messagesSubject.next([]);
   }
 
   sendMessage(user: string, message: string): void {
     if (this.client.connected) {
+      const chatMessage: ChatMessage = { user, content: message };
       this.client.publish({
-        destination: "/app/new-message",
-        body: JSON.stringify({ user, message })
+        destination: '/app/new-message',
+        body: JSON.stringify(chatMessage)
       });
     } else {
-      console.error('Not connected to WebSocket');
+      console.error("STOMP client is not connected. Message not sent.");
     }
+  }
+
+  joinChat(username: string): void {
+    console.log(`User ${username} is joining the chat.`);
+    // You can implement additional logic here if needed
   }
 
   get messages$(): Observable<ChatMessage[]> {
     return this.messagesSubject.asObservable();
+  }
+
+  get connectionStatus$(): Observable<ConnectionStatus> {
+    return this.connectionStatusSubject.asObservable();
   }
 }
