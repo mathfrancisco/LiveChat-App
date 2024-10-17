@@ -25,6 +25,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   constructor(private chatService: ChatService) {}
 
   ngOnInit() {
+    // Subscribe to messages from the chat service
     this.chatService.messages$
       .pipe(takeUntil(this.destroy$))
       .subscribe(messages => {
@@ -32,19 +33,20 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.scrollToBottom();
       });
 
+    // Subscribe to connection status
     this.chatService.connectionStatus$
       .pipe(takeUntil(this.destroy$))
       .subscribe(status => {
         this.connected = status.connected;
         this.connectionError = status.error || '';
-        this.connecting = false;
+        this.connecting = false; // Reset connecting state on status change
       });
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
-    this.disconnect();
+    this.disconnect(); // Ensure disconnection on component destruction
   }
 
   handleKeyPress(event: KeyboardEvent, form: NgForm) {
@@ -61,7 +63,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   isOwnMessage(message: ChatMessage): boolean {
-    return message.user === this.username;
+    return message.user === this.username; // Check if the message is sent by the user
   }
 
   formatTime(time: string): string {
@@ -75,22 +77,24 @@ export class ChatComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       if (this.messagesContainer) {
         const element = this.messagesContainer.nativeElement;
-        element.scrollTop = element.scrollHeight;
+        element.scrollTop = element.scrollHeight; // Scroll to the bottom of chat messages
       }
     });
   }
 
   connect() {
     if (!this.username.trim() || this.connecting) {
-      return;
+      return; // Prevent connecting if username is empty or already connecting
     }
 
     this.connecting = true;
     this.connectionError = '';
 
+    // Attempt to connect using chat service
     this.chatService.connect().subscribe({
       next: () => {
-        this.chatService.joinChat(this.username);
+        this.connected = true; // Update connection state
+        this.chatService.joinChat(this.username); // Notify chat service of new user
       },
       error: (error) => {
         this.connecting = false;
@@ -101,17 +105,18 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   disconnect() {
-    this.chatService.disconnect();
-    this.message = '';
-    this.connected = false;
+    this.chatService.disconnect(); // Disconnect from chat service
+    this.message = ''; // Clear message input
+    this.connected = false; // Update connection state
   }
 
   sendMessage() {
     if (!this.message.trim()) {
-      return;
+      return; // Prevent sending empty messages
     }
 
+    // Send message through chat service
     this.chatService.sendMessage(this.username, this.message);
-    this.message = '';
+    this.message = ''; // Clear message input after sending
   }
 }
