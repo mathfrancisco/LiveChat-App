@@ -13,6 +13,6 @@ public class LiveChatController {
     @SendTo("/topics/livechat")
     public ChatOutput newMessage(ChatInput input) {
         System.out.println("Received message: " + input);
-        return new ChatOutput(HtmlUtils.htmlEscape(input.user()), HtmlUtils.htmlEscape(input.message()));
+        return new ChatOutput(HtmlUtils.htmlEscape(input.user() + ": " + input.message()));
     }
 }
