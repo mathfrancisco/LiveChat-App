@@ -30,6 +30,7 @@ export class ChatService {
   constructor() {
     this.client = new Client({
       brokerURL: environment.production ? environment.wsEndpoint : 'ws://localhost:5000/livechat-websocket',
+      console.log('Attempting to connect to:', environment.wsEndpoint);
       connectHeaders: {
         login: 'guest',
         passcode: 'guest'
