@@ -115,4 +115,4 @@ Este projeto está licenciado sob a [MIT License](LICENSE).
 
 ## 👨‍💻 Autor
 
-- [Seu Nome] - [Seu GitHub]
+- - Matheus Francisco - [GitHub](https://github.com/mathfrancisco)
