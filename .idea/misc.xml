@@ -12,6 +12,7 @@
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/livechat/pom.xml" />
+        <option value="$PROJECT_DIR$/chat/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">
