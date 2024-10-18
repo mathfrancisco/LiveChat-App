@@ -1,113 +1,238 @@
 # 💬 LiveChat-App
 
-O **LiveChat-App** é uma aplicação de chat em tempo real que permite aos usuários se comunicarem através de salas de chat públicas e mensagens privadas. Desenvolvida com tecnologias modernas, esta aplicação oferece uma experiência de chat fluida e responsiva.
+## 📌 Visão Geral
 
-## 📌 Funcionalidades
+O **LiveChat-App** é uma aplicação de chat em tempo real robusta e escalável, projetada para fornecer uma experiência de comunicação fluida e eficiente. Utilizando tecnologias modernas tanto no frontend quanto no backend, esta aplicação oferece recursos de chat em grupo e privado, com uma interface de usuário intuitiva e responsiva.
+
+## 🌟 Funcionalidades Principais
 
 - **Chat em Tempo Real**: 
-  - Comunicação instantânea entre usuários.
-  - Suporte para salas de chat públicas e mensagens privadas.
+  - Comunicação instantânea entre usuários sem necessidade de recarregar a página.
+  - Suporte para salas de chat públicas (chatroom) e mensagens privadas.
+  - Notificações em tempo real para novas mensagens.
 
 - **Sistema de Usuários**:
-  - Registro simplificado de usuários.
-  - Lista de usuários online.
+  - Registro simplificado de usuários com nome de usuário único.
+  - Lista dinâmica de usuários online.
+  - Status de presença (online/offline) para cada usuário.
 
-- **Interface Intuitiva**:
+- **Interface de Usuário**:
+  - Design responsivo para desktop e dispositivos móveis.
   - Alternância fácil entre chats públicos e privados.
-  - Indicadores visuais para mensagens enviadas e recebidas.
+  - Indicadores visuais para mensagens enviadas, recebidas e lidas.
+  - Suporte para emojis e formatação básica de texto.
 
-## 🎨 Arquitetura
+- **Segurança**:
+  - Comunicação criptografada via WebSocket seguro (WSS).
+  - Sanitização de input para prevenir ataques XSS.
+  - Limitação de taxa para prevenir spam.
 
-- **Backend**: 
-  - Desenvolvido em Java com Spring Boot.
-  - Utiliza WebSocket para comunicação em tempo real.
+## 🏗 Arquitetura
 
-- **Frontend**: 
-  - Construído com Angular, oferecendo uma interface de usuário dinâmica e responsiva.
+### Backend
+- Desenvolvido em Java com Spring Boot, oferecendo uma base robusta e escalável.
+- Utiliza WebSocket para comunicação em tempo real, permitindo mensagens bidirecionais.
+- Implementa o protocolo STOMP sobre WebSocket para mensagens estruturadas.
+- Armazenamento em memória para sessões de usuário e histórico de chat recente.
 
-- **Comunicação**: 
-  - Integração entre frontend e backend através do protocolo STOMP sobre WebSocket.
+### Frontend
+- Construído com Angular, proporcionando uma Single Page Application (SPA) reativa.
+- Utiliza RxJS para gerenciamento de estado e fluxos de dados assíncronos.
+- Implementa o padrão Observable para comunicação em tempo real com o backend.
+
+### Fluxo de Dados
+1. O cliente se conecta ao servidor via WebSocket.
+2. O servidor autentica o cliente e estabelece uma sessão.
+3. O cliente subscreve-se a canais relevantes (chatroom público, canais privados).
+4. As mensagens são enviadas e recebidas através desses canais em tempo real.
 
 ## 🚀 Tecnologias Utilizadas
 
 ### Backend
-
-- **Java**: Linguagem de programação principal para o backend.
-- **Spring Boot**: Framework para criação de aplicações Java robustas e escaláveis.
+- **Java 11+**: Linguagem de programação principal.
+- **Spring Boot 2.7+**: Framework para criação de aplicações Java.
 - **Spring WebSocket**: Módulo do Spring para suporte a WebSocket.
-- **Lombok**: Biblioteca para redução de código boilerplate em Java.
+- **Project Lombok**: Redução de código boilerplate.
+- **SLF4J & Logback**: Logging.
+- **JUnit 5 & Mockito**: Testes unitários e de integração.
 
 ### Frontend
+- **Angular 16+**: Framework para desenvolvimento do cliente web.
+- **TypeScript 4.9+**: Superset tipado de JavaScript.
+- **RxJS 7+**: Biblioteca para programação reativa.
+- **@stomp/stompjs**: Cliente STOMP para WebSocket.
+- **sockjs-client**: Fallback para browsers sem suporte nativo a WebSocket.
+- **Bootstrap 5**: Framework CSS para design responsivo.
 
-- **Angular**: Framework JavaScript para desenvolvimento de interfaces de usuário.
-- **@stomp/stompjs**: Cliente STOMP para comunicação WebSocket.
-- **sockjs-client**: Cliente WebSocket com fallback para navegadores mais antigos.
-- **RxJS**: Biblioteca para programação reativa em JavaScript.
+## 💻 Requisitos do Sistema
+
+### Desenvolvimento
+- Java Development Kit (JDK) 11 ou superior
+- Node.js 16.x ou superior
+- npm 7.x ou superior
+- Maven 3.6.x ou superior
+- Git
+
+### Produção
+- Servidor com suporte a Java 11+ (ex: Tomcat, Jetty)
+- Mínimo de 1GB de RAM
+- 1 CPU core (recomendado 2+ para melhor performance)
+- 10GB de espaço em disco
 
 ## 🛠 Configuração e Instalação
 
 ### Backend
 
-1. Certifique-se de ter o Java JDK e o Maven instalados.
-2. Clone o repositório e navegue até a pasta do backend.
-3. Execute `mvn spring-boot:run` para iniciar o servidor.
+1. Clone o repositório:
+   ```
+   git clone https://github.com/seu-usuario/livechat-app.git
+   ```
+2. Navegue até a pasta do backend:
+   ```
+   cd livechat-app/backend
+   ```
+3. Compile e execute os testes:
+   ```
+   mvn clean install
+   ```
+4. Execute a aplicação:
+   ```
+   mvn spring-boot:run
+   ```
+
+O backend estará rodando em `http://localhost:8080`.
 
 ### Frontend
 
-1. Certifique-se de ter o Node.js e o npm instalados.
-2. Navegue até a pasta do frontend.
-3. Execute `npm install` para instalar as dependências.
-4. Execute `ng serve` para iniciar o servidor de desenvolvimento.
+1. Navegue até a pasta do frontend:
+   ```
+   cd livechat-app/frontend
+   ```
+2. Instale as dependências:
+   ```
+   npm install
+   ```
+3. Execute o servidor de desenvolvimento:
+   ```
+   ng serve
+   ```
 
-## 🚀 Uso
+O frontend estará disponível em `http://localhost:4200`.
 
-1. Abra o navegador e acesse `http://localhost:4200`.
-2. Insira seu nome de usuário e clique em "connect".
-3. Você será direcionado para a sala de chat pública.
-4. Para iniciar um chat privado, clique no nome de outro usuário na lista.
+## 📁 Estrutura do Projeto
 
-## 🧑‍💻 Desenvolvimento
-
-O projeto está estruturado da seguinte forma:
-
-- `backend/`: Contém o código Java do servidor.
-  - `WebSocketConfig.java`: Configuração do WebSocket.
-  - `ChatController.java`: Controlador para gerenciar mensagens.
-  - `Message.java` e `Status.java`: Modelos de dados.
-
-- `frontend/`: Contém o código Angular do cliente.
-  - `web-socket.service.ts`: Serviço para gerenciar a conexão WebSocket.
-  - `chat-room.component.ts`: Componente principal do chat.
+```
+livechat-app/
+├── backend/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/example/livechat/
+│   │   │   │   ├── config/
+│   │   │   │   │   └── WebSocketConfig.java
+│   │   │   │   ├── controller/
+│   │   │   │   │   └── ChatController.java
+│   │   │   │   ├── model/
+│   │   │   │   │   ├── Message.java
+│   │   │   │   │   └── Status.java
+│   │   │   │   └── LiveChatApplication.java
+│   │   │   └── resources/
+│   │   │       └── application.properties
+│   │   └── test/
+│   └── pom.xml
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── services/
+│   │   │   │   └── web-socket.service.ts
+│   │   │   ├── components/
+│   │   │   │   └── chat-room/
+│   │   │   │       ├── chat-room.component.ts
+│   │   │   │       ├── chat-room.component.html
+│   │   │   │       └── chat-room.component.css
+│   │   │   ├── app.module.ts
+│   │   │   └── app.component.ts
+│   │   ├── assets/
+│   │   └── index.html
+│   ├── angular.json
+│   └── package.json
+└── README.md
+```
 
 ## 🚀 Build e Deploy
 
-Após garantir que a aplicação está funcionando corretamente em ambiente local, siga estes passos para preparar e implantar a aplicação:
+### Preparação para Produção
 
 1. **Build do Frontend**:
-   - Navegue até a pasta do frontend.
-   - Execute `ng build --prod` para criar uma versão otimizada para produção.
-   - Os arquivos gerados estarão na pasta `dist/`.
+   ```
+   cd frontend
+   ng build --prod
+   ```
 
 2. **Integração com o Backend**:
-   - Copie todos os arquivos da pasta `dist/` para a pasta `src/main/resources/static/` do projeto backend.
+   ```
+   cp -R dist/* ../backend/src/main/resources/static/
+   ```
 
 3. **Build do Backend**:
-   - Navegue até a pasta raiz do projeto backend.
-   - Execute `mvn clean package` para criar o arquivo JAR.
-   - O arquivo JAR será gerado na pasta `target/`.
+   ```
+   cd ../backend
+   mvn clean package
+   ```
 
-4. **Deploy na AWS Elastic Beanstalk**:
-   - Faça login no console da AWS e navegue até o Elastic Beanstalk.
-   - Crie um novo ambiente ou selecione um existente.
-   - Faça upload do arquivo JAR gerado.
-   - Configure as opções de ambiente conforme necessário.
-   - Implante a aplicação.
+### Deploy na AWS Elastic Beanstalk
 
-Após esses passos, sua aplicação LiveChat-App estará rodando na AWS Elastic Beanstalk, pronta para uso em um ambiente de produção.
+1. Acesse o [Console AWS Elastic Beanstalk](https://console.aws.amazon.com/elasticbeanstalk).
+2. Clique em "Create a new environment".
+3. Escolha "Web server environment".
+4. Em "Platform", selecione "Java" e a versão apropriada.
+5. Em "Application code", escolha "Upload your code" e faça upload do arquivo JAR gerado.
+6. Configure as opções de ambiente conforme necessário (ex: tamanho da instância, variáveis de ambiente).
+7. Revise e confirme as configurações.
+8. Clique em "Create environment" para iniciar o deploy.
+
+O processo de deploy pode levar alguns minutos. Uma vez concluído, a AWS fornecerá um URL para acessar sua aplicação.
+
+## 🐞 Troubleshooting
+
+- **Problema de Conexão WebSocket**: Verifique se o frontend está utilizando o protocolo correto (ws:// para desenvolvimento local, wss:// para produção).
+- **Mensagens não chegando em tempo real**: Certifique-se de que o CORS está configurado corretamente no backend.
+- **Erros de build no frontend**: Verifique a compatibilidade das versões das dependências no `package.json`.
+
+## 🧪 Testes
+
+### Backend
+Execute os testes unitários e de integração com:
+```
+mvn test
+```
+
+### Frontend
+Execute os testes unitários com:
+```
+ng test
+```
+
+## 📈 Monitoramento e Logs
+
+- Utilize o Amazon CloudWatch para monitorar métricas de performance e logs da aplicação quando hospedada na AWS.
+- Para ambientes locais ou outros provedores, considere implementar o ELK stack (Elasticsearch, Logstash, Kibana) para análise de logs centralizada.
+
+## 🛡 Segurança
+
+- Mantenha todas as dependências atualizadas regularmente.
+- Implemente rate limiting no backend para prevenir ataques de força bruta.
+- Use HTTPS em produção para criptografar todo o tráfego.
+- Sanitize todas as entradas de usuário para prevenir XSS e injeção de SQL.
 
 ## 🤝 Contribuição
 
-Contribuições são sempre bem-vindas! Sinta-se à vontade para abrir issues ou enviar pull requests.
+Contribuições são bem-vindas! Por favor, siga estes passos:
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Faça commit das suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
 
 ## 📜 Licença
 
@@ -115,4 +240,5 @@ Este projeto está licenciado sob a [MIT License](LICENSE).
 
 ## 👨‍💻 Autor
 
-- - Matheus Francisco - [GitHub](https://github.com/mathfrancisco)
+- **[Matheus Francisco]** - *Trabalho inicial* - [@seuGitHub](https://github.com/mathfrancisco)
+
