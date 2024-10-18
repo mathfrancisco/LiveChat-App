@@ -1,1 +1,225 @@
+// src/app/app.module.ts
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { AppComponent } from './app.component';
+import { ChatRoomComponent } from './chat-room/chat-room.component';
 
+@NgModule({
+  declarations: [AppComponent, ChatRoomComponent],
+  imports: [BrowserModule, FormsModule],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+// src/app/app.component.ts
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  template: '<app-chat-room></app-chat-room>'
+})
+export class AppComponent { }
+
+// src/app/chat-room/chat-room.component.ts
+import { Component, OnInit } from '@angular/core';
+import { WebSocketService } from '../services/web-socket.service';
+
+@Component({
+  selector: 'app-chat-room',
+  templateUrl: './chat-room.component.html',
+  styleUrls: ['./chat-room.component.css']
+})
+export class ChatRoomComponent implements OnInit {
+  privateChats = new Map<string, any[]>();
+  publicChats: any[] = [];
+  tab = 'CHATROOM';
+  userData = {
+    username: '',
+    receivername: '',
+    connected: false,
+    message: ''
+  };
+
+  constructor(private webSocketService: WebSocketService) {}
+
+  ngOnInit() {
+    this.webSocketService.publicMessages$.subscribe(message => {
+      this.handleMessage(message);
+    });
+
+    this.webSocketService.privateMessages$.subscribe(message => {
+      this.handlePrivateMessage(message);
+    });
+  }
+
+  connect() {
+    this.webSocketService.connect(this.userData.username);
+    this.userData.connected = true;
+  }
+
+  handleMessage(payloadData: any) {
+    switch(payloadData.status) {
+      case "JOIN":
+        if(!this.privateChats.get(payloadData.senderName)) {
+          this.privateChats.set(payloadData.senderName, []);
+        }
+        break;
+      case "MESSAGE":
+        this.publicChats.push(payloadData);
+        break;
+    }
+  }
+
+  handlePrivateMessage(payloadData: any) {
+    if(this.privateChats.get(payloadData.senderName)) {
+      this.privateChats.get(payloadData.senderName)?.push(payloadData);
+    } else {
+      this.privateChats.set(payloadData.senderName, [payloadData]);
+    }
+  }
+
+  sendMessage() {
+    if (this.userData.connected) {
+      const chatMessage = {
+        senderName: this.userData.username,
+        message: this.userData.message,
+        status: "MESSAGE"
+      };
+      this.webSocketService.sendPublicMessage(chatMessage);
+      this.userData.message = '';
+    }
+  }
+
+  sendPrivateMessage() {
+    if (this.userData.connected) {
+      const chatMessage = {
+        senderName: this.userData.username,
+        receiverName: this.tab,
+        message: this.userData.message,
+        status: "MESSAGE"
+      };
+      
+      if(this.userData.username !== this.tab) {
+        this.privateChats.get(this.tab)?.push(chatMessage);
+      }
+      this.webSocketService.sendPrivateMessage(chatMessage);
+      this.userData.message = '';
+    }
+  }
+
+  setActiveTab(tab: string) {
+    this.tab = tab;
+  }
+}
+
+// src/app/services/web-socket.service.ts
+import { Injectable } from '@angular/core';
+import { Client } from '@stomp/stompjs';
+import * as SockJS from 'sockjs-client';
+import { BehaviorSubject } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class WebSocketService {
+  private client: Client;
+  private publicMessagesSubject = new BehaviorSubject<any>(null);
+  private privateMessagesSubject = new BehaviorSubject<any>(null);
+
+  publicMessages$ = this.publicMessagesSubject.asObservable();
+  privateMessages$ = this.privateMessagesSubject.asObservable();
+
+  constructor() {
+    this.client = new Client({
+      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      onConnect: () => {
+        console.log('Connected');
+      },
+      onDisconnect: () => {
+        console.log('Disconnected');
+      }
+    });
+  }
+
+  connect(username: string) {
+    this.client.activate();
+    
+    this.client.onConnect = () => {
+      this.client.subscribe('/chatroom/public', message => {
+        this.publicMessagesSubject.next(JSON.parse(message.body));
+      });
+
+      this.client.subscribe(`/user/${username}/private`, message => {
+        this.privateMessagesSubject.next(JSON.parse(message.body));
+      });
+
+      this.sendPublicMessage({
+        senderName: username,
+        status: "JOIN"
+      });
+    };
+  }
+
+  disconnect() {
+    this.client.deactivate();
+  }
+
+  sendPublicMessage(message: any) {
+    this.client.publish({
+      destination: '/app/message',
+      body: JSON.stringify(message)
+    });
+  }
+
+  sendPrivateMessage(message: any) {
+    this.client.publish({
+      destination: '/app/private-message',
+      body: JSON.stringify(message)
+    });
+  }
+}
+
+// src/app/chat-room/chat-room.component.html
+<div class="container">
+  <div *ngIf="userData.connected; else registerForm" class="chat-box">
+    <div class="member-list">
+      <ul>
+        <li (click)="setActiveTab('CHATROOM')" [class.active]="tab === 'CHATROOM'" class="member">Chatroom</li>
+        <li *ngFor="let name of privateChats.keys()" (click)="setActiveTab(name)" [class.active]="tab === name" class="member">{{ name }}</li>
+      </ul>
+    </div>
+    <div class="chat-content">
+      <ul class="chat-messages" *ngIf="tab === 'CHATROOM'; else privateChat">
+        <li *ngFor="let chat of publicChats" [class.self]="chat.senderName === userData.username" class="message">
+          <div *ngIf="chat.senderName !== userData.username" class="avatar">{{ chat.senderName }}</div>
+          <div class="message-data">{{ chat.message }}</div>
+          <div *ngIf="chat.senderName === userData.username" class="avatar self">{{ chat.senderName }}</div>
+        </li>
+      </ul>
+      <ng-template #privateChat>
+        <ul class="chat-messages">
+          <li *ngFor="let chat of privateChats.get(tab)" [class.self]="chat.senderName === userData.username" class="message">
+            <div *ngIf="chat.senderName !== userData.username" class="avatar">{{ chat.senderName }}</div>
+            <div class="message-data">{{ chat.message }}</div>
+            <div *ngIf="chat.senderName === userData.username" class="avatar self">{{ chat.senderName }}</div>
+          </li>
+        </ul>
+      </ng-template>
+      <div class="send-message">
+        <input type="text" class="input-message" placeholder="enter the message" [(ngModel)]="userData.message">
+        <button type="button" class="send-button" (click)="tab === 'CHATROOM' ? sendMessage() : sendPrivateMessage()">send</button>
+      </div>
+    </div>
+  </div>
+  <ng-template #registerForm>
+    <div class="register">
+      <input id="user-name" placeholder="Enter your name" name="userName" [(ngModel)]="userData.username">
+      <button type="button" (click)="connect()">connect</button>
+    </div>
+  </ng-template>
+</div>
+
+// src/app/chat-room/chat-room.component.css
+/* Add the CSS styles here
