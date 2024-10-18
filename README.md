@@ -79,6 +79,32 @@ O projeto está estruturado da seguinte forma:
   - `web-socket.service.ts`: Serviço para gerenciar a conexão WebSocket.
   - `chat-room.component.ts`: Componente principal do chat.
 
+## 🚀 Build e Deploy
+
+Após garantir que a aplicação está funcionando corretamente em ambiente local, siga estes passos para preparar e implantar a aplicação:
+
+1. **Build do Frontend**:
+   - Navegue até a pasta do frontend.
+   - Execute `ng build --prod` para criar uma versão otimizada para produção.
+   - Os arquivos gerados estarão na pasta `dist/`.
+
+2. **Integração com o Backend**:
+   - Copie todos os arquivos da pasta `dist/` para a pasta `src/main/resources/static/` do projeto backend.
+
+3. **Build do Backend**:
+   - Navegue até a pasta raiz do projeto backend.
+   - Execute `mvn clean package` para criar o arquivo JAR.
+   - O arquivo JAR será gerado na pasta `target/`.
+
+4. **Deploy na AWS Elastic Beanstalk**:
+   - Faça login no console da AWS e navegue até o Elastic Beanstalk.
+   - Crie um novo ambiente ou selecione um existente.
+   - Faça upload do arquivo JAR gerado.
+   - Configure as opções de ambiente conforme necessário.
+   - Implante a aplicação.
+
+Após esses passos, sua aplicação LiveChat-App estará rodando na AWS Elastic Beanstalk, pronta para uso em um ambiente de produção.
+
 ## 🤝 Contribuição
 
 Contribuições são sempre bem-vindas! Sinta-se à vontade para abrir issues ou enviar pull requests.
