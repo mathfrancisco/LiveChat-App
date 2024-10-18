@@ -10,9 +10,11 @@ export class WebSocketService {
   private client: Client;
   private publicMessagesSubject = new BehaviorSubject<any>(null);
   private privateMessagesSubject = new BehaviorSubject<any>(null);
+  private connectedUsersSubject = new BehaviorSubject<string[]>([]);
 
   publicMessages$ = this.publicMessagesSubject.asObservable();
   privateMessages$ = this.privateMessagesSubject.asObservable();
+  connectedUsers$ = this.connectedUsersSubject.asObservable();
 
   constructor() {
     this.client = new Client({
@@ -31,7 +33,13 @@ export class WebSocketService {
 
     this.client.onConnect = () => {
       this.client.subscribe('/chatroom/public', message => {
-        this.publicMessagesSubject.next(JSON.parse(message.body));
+        const payload = JSON.parse(message.body);
+        this.publicMessagesSubject.next(payload);
+
+        // Update connected users list when a user joins or leaves
+        if (payload.status === 'JOIN' || payload.status === 'LEAVE') {
+          this.updateConnectedUsers(payload);
+        }
       });
 
       this.client.subscribe(`/user/${username}/private`, message => {
@@ -45,7 +53,11 @@ export class WebSocketService {
     };
   }
 
-  disconnect() {
+  disconnect(username: string) {
+    this.sendPublicMessage({
+      senderName: username,
+      status: "LEAVE"
+    });
     this.client.deactivate();
   }
 
@@ -61,5 +73,14 @@ export class WebSocketService {
       destination: '/app/private-message',
       body: JSON.stringify(message)
     });
+  }
+
+  private updateConnectedUsers(payload: any) {
+    const currentUsers = this.connectedUsersSubject.value;
+    if (payload.status === 'JOIN' && !currentUsers.includes(payload.senderName)) {
+      this.connectedUsersSubject.next([...currentUsers, payload.senderName]);
+    } else if (payload.status === 'LEAVE') {
+      this.connectedUsersSubject.next(currentUsers.filter(user => user !== payload.senderName));
+    }
   }
 }

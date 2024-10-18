@@ -1,14 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { WebSocketService } from '../services/web-socket.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-chat-room',
   templateUrl: './chat-room.component.html',
   styleUrls: ['./chat-room.component.css']
 })
-export class ChatRoomComponent implements OnInit {
-  privateChats = new Map<string, any[]>();
+export class ChatRoomComponent implements OnInit, OnDestroy {
+  privateChats: Map<string, any[]> = new Map<string, any[]>();
   publicChats: any[] = [];
+  connectedUsers: string[] = [];
   tab = 'CHATROOM';
   userData = {
     username: '',
@@ -17,20 +19,33 @@ export class ChatRoomComponent implements OnInit {
     message: ''
   };
 
+  private subscriptions: Subscription[] = [];
+
   constructor(private webSocketService: WebSocketService) {}
 
   ngOnInit() {
-    this.webSocketService.publicMessages$.subscribe(message => {
-      if (message) {
-        this.handleMessage(message);
-      }
-    });
+    this.subscriptions.push(
+      this.webSocketService.publicMessages$.subscribe(message => {
+        if (message) {
+          this.handleMessage(message);
+        }
+      }),
+      this.webSocketService.privateMessages$.subscribe(message => {
+        if (message) {
+          this.handlePrivateMessage(message);
+        }
+      }),
+      this.webSocketService.connectedUsers$.subscribe(users => {
+        this.connectedUsers = users;
+      })
+    );
+  }
 
-    this.webSocketService.privateMessages$.subscribe(message => {
-      if (message) {
-        this.handlePrivateMessage(message);
-      }
-    });
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    if (this.userData.connected) {
+      this.webSocketService.disconnect(this.userData.username);
+    }
   }
 
   connect() {
@@ -41,9 +56,8 @@ export class ChatRoomComponent implements OnInit {
   handleMessage(payloadData: any) {
     switch(payloadData.status) {
       case "JOIN":
-        if(!this.privateChats.get(payloadData.senderName)) {
-          this.privateChats.set(payloadData.senderName, []);
-        }
+      case "LEAVE":
+        // Connected users are now handled by the WebSocketService
         break;
       case "MESSAGE":
         this.publicChats = [...this.publicChats, payloadData];
@@ -52,17 +66,18 @@ export class ChatRoomComponent implements OnInit {
   }
 
   handlePrivateMessage(payloadData: any) {
-    if(this.privateChats.get(payloadData.senderName)) {
-      const existingChats = this.privateChats.get(payloadData.senderName) || [];
-      this.privateChats.set(payloadData.senderName, [...existingChats, payloadData]);
+    const chatPartner = payloadData.senderName === this.userData.username ? payloadData.receiverName : payloadData.senderName;
+    if(this.privateChats.has(chatPartner)) {
+      const existingChats = this.privateChats.get(chatPartner) || [];
+      this.privateChats.set(chatPartner, [...existingChats, payloadData]);
     } else {
-      this.privateChats.set(payloadData.senderName, [payloadData]);
+      this.privateChats.set(chatPartner, [payloadData]);
     }
     this.privateChats = new Map(this.privateChats);
   }
 
   sendMessage() {
-    if (this.userData.connected) {
+    if (this.userData.connected && this.userData.message.trim() !== '') {
       const chatMessage = {
         senderName: this.userData.username,
         message: this.userData.message,
@@ -74,7 +89,7 @@ export class ChatRoomComponent implements OnInit {
   }
 
   sendPrivateMessage() {
-    if (this.userData.connected) {
+    if (this.userData.connected && this.userData.message.trim() !== '' && this.tab !== 'CHATROOM') {
       const chatMessage = {
         senderName: this.userData.username,
         receiverName: this.tab,
@@ -82,16 +97,17 @@ export class ChatRoomComponent implements OnInit {
         status: "MESSAGE"
       };
 
-      if(this.userData.username !== this.tab) {
-        const existingChats = this.privateChats.get(this.tab) || [];
-        this.privateChats.set(this.tab, [...existingChats, chatMessage]);
-      }
       this.webSocketService.sendPrivateMessage(chatMessage);
+      this.handlePrivateMessage(chatMessage);
       this.userData.message = '';
     }
   }
 
   setActiveTab(tab: string) {
     this.tab = tab;
+  }
+
+  get privateChatKeys(): string[] {
+    return Array.from(this.privateChats.keys());
   }
 }
