@@ -110,7 +110,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   get privateChatKeys(): string[] {
     return Array.from(this.privateChats.keys());
   }
-  
+
   disconnect() {
     if (this.userData.connected) {
       this.webSocketService.disconnect(this.userData.username);
