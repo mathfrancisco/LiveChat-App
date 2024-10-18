@@ -73,12 +73,6 @@ O **LiveChat-App** é uma aplicação de chat em tempo real robusta e escalável
 - Maven 3.6.x ou superior
 - Git
 
-### Produção
-- Servidor com suporte a Java 11+ (ex: Tomcat, Jetty)
-- Mínimo de 1GB de RAM
-- 1 CPU core (recomendado 2+ para melhor performance)
-- 10GB de espaço em disco
-
 ## 🛠 Configuração e Instalação
 
 ### Backend
