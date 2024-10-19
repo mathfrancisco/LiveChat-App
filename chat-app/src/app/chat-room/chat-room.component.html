@@ -1,54 +1,155 @@
+<!DOCTYPE html>
 <div class="container-fluid mt-3">
   <div *ngIf="userData.connected; else registerForm" class="chat-box">
     <div class="row h-100">
+      <!-- Sidebar -->
       <div class="col-md-3 member-list p-0">
-        <div class="list-header">Chats</div>
-        <ul class="list-group">
-          <li class="list-group-item" (click)="setActiveTab('CHATROOM')" [class.active]="tab === 'CHATROOM'">
-            <i class="fas fa-comments"></i> Chatroom
-          </li>
-          <li class="list-group-item" *ngFor="let user of connectedUsers" (click)="setActiveTab(user)" [class.active]="tab === user">
-            <i class="fas fa-user"></i> {{ user }}
-          </li>
-        </ul>
-        <button class="btn btn-danger w-100 mt-2" (click)="disconnect()">
-          <i class="fas fa-sign-out-alt"></i> Disconnect
-        </button>
-      </div>
-      <div class="col-md-9 chat-content">
-        <div class="chat-header">
-          {{ tab === 'CHATROOM' ? 'Public Chatroom' : tab }}
+        <div class="sidebar-header">
+          <h4 class="mb-0">Chat</h4>
+          <span class="online-indicator">
+            <span class="dot"></span>
+            Online
+          </span>
         </div>
-        <div class="chat-messages" *ngIf="tab === 'CHATROOM'; else privateChat">
-          <div *ngFor="let chat of publicChats" class="message" [class.self]="chat.senderName === userData.username">
-            <div class="message-content">
-              <div *ngIf="chat.senderName !== userData.username" class="avatar">{{ chat.senderName[0] }}</div>
-              <div class="message-data">
-                <div class="sender-name" *ngIf="chat.senderName !== userData.username">{{ chat.senderName }}</div>
-                <div class="message-text">{{ chat.message }}</div>
+
+        <div class="search-box">
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="fas fa-search"></i>
+            </span>
+            <input type="text" class="form-control" placeholder="Buscar conversa...">
+          </div>
+        </div>
+
+        <div class="conversations-list">
+          <div class="list-section">
+            <h6 class="section-title">CANAIS</h6>
+            <div class="chat-item" (click)="setActiveTab('CHATROOM')" [class.active]="tab === 'CHATROOM'">
+              <div class="chat-item-avatar">
+                <i class="fas fa-users"></i>
               </div>
-              <div *ngIf="chat.senderName === userData.username" class="avatar self">{{ chat.senderName[0] }}</div>
+              <div class="chat-item-info">
+                <h6 class="chat-item-title">Sala Pública</h6>
+                <p class="chat-item-subtitle">Chat em grupo</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="list-section">
+            <h6 class="section-title">CONVERSAS DIRETAS</h6>
+            <div class="chat-item" *ngFor="let user of connectedUsers" (click)="setActiveTab(user)" [class.active]="tab === user">
+              <div class="chat-item-avatar">
+                {{ user[0].toUpperCase() }}
+              </div>
+              <div class="chat-item-info">
+                <h6 class="chat-item-title">{{ user }}</h6>
+                <p class="chat-item-subtitle">Online</p>
+              </div>
             </div>
           </div>
         </div>
+
+        <div class="sidebar-footer">
+          <div class="user-info">
+            <div class="user-avatar">
+              {{ userData.username[0].toUpperCase() }}
+            </div>
+            <div class="user-details">
+              <h6 class="mb-0">{{ userData.username }}</h6>
+              <small class="text-muted">Online</small>
+            </div>
+          </div>
+          <button class="btn btn-icon" (click)="disconnect()">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat Content -->
+      <div class="col-md-9 chat-content">
+        <div class="chat-header">
+          <div class="d-flex align-items-center">
+            <div class="chat-title">
+              <h5 class="mb-0">{{ tab === 'CHATROOM' ? 'Sala Pública' : tab }}</h5>
+              <small class="text-muted">
+                {{ tab === 'CHATROOM' ? connectedUsers.length + ' participantes' : 'Conversa privada' }}
+              </small>
+            </div>
+          </div>
+          <div class="chat-actions">
+            <button class="btn btn-icon">
+              <i class="fas fa-phone"></i>
+            </button>
+            <button class="btn btn-icon">
+              <i class="fas fa-video"></i>
+            </button>
+            <button class="btn btn-icon">
+              <i class="fas fa-info-circle"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="chat-messages" *ngIf="tab === 'CHATROOM'; else privateChat">
+          <div *ngFor="let chat of publicChats" class="message" [class.self]="chat.senderName === userData.username">
+            <div class="message-content">
+              <div class="message-avatar" *ngIf="chat.senderName !== userData.username">
+                {{ chat.senderName[0].toUpperCase() }}
+              </div>
+              <div class="message-bubble">
+                <div class="message-info" *ngIf="chat.senderName !== userData.username">
+                  <span class="sender-name">{{ chat.senderName }}</span>
+                  <span class="message-time">12:00</span>
+                </div>
+                <p class="message-text">{{ chat.message }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <ng-template #privateChat>
           <div class="chat-messages">
             <div *ngFor="let chat of privateChats.get(tab)" class="message" [class.self]="chat.senderName === userData.username">
               <div class="message-content">
-                <div *ngIf="chat.senderName !== userData.username" class="avatar">{{ chat.senderName[0] }}</div>
-                <div class="message-data">
-                  <div class="sender-name" *ngIf="chat.senderName !== userData.username">{{ chat.senderName }}</div>
-                  <div class="message-text">{{ chat.message }}</div>
+                <div class="message-avatar" *ngIf="chat.senderName !== userData.username">
+                  {{ chat.senderName[0].toUpperCase() }}
                 </div>
-                <div *ngIf="chat.senderName === userData.username" class="avatar self">{{ chat.senderName[0] }}</div>
+                <div class="message-bubble">
+                  <div class="message-info" *ngIf="chat.senderName !== userData.username">
+                    <span class="sender-name">{{ chat.senderName }}</span>
+                    <span class="message-time">12:00</span>
+                  </div>
+                  <p class="message-text">{{ chat.message }}</p>
+                </div>
               </div>
             </div>
           </div>
         </ng-template>
-        <div class="send-message">
+
+        <div class="chat-footer">
           <div class="input-group">
-            <input type="text" class="form-control input-message" placeholder="Type your message..." [(ngModel)]="userData.message">
-            <button class="btn btn-primary send-button" (click)="tab === 'CHATROOM' ? sendMessage() : sendPrivateMessage()">
+            <button class="btn btn-icon">
+              <i class="fas fa-paperclip"></i>
+            </button>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Digite sua mensagem..."
+              [(ngModel)]="userData.message"
+              #messageInput
+              (keyup.enter)="tab === 'CHATROOM' ? sendMessage() : sendPrivateMessage()"
+            >
+            <button
+              class="btn btn-icon emoji-btn"
+              [class.active]="showEmojiPicker"
+              (click)="toggleEmojiPicker($event)">
+              <i class="far fa-smile"></i>
+            </button>
+            <div *ngIf="showEmojiPicker" class="emoji-picker-wrapper" #emojiPicker>
+              <emoji-picker (click)="onEmojiSelect($event)"></emoji-picker>
+            </div>
+            <button
+              class="btn btn-primary send-btn"
+              (click)="tab === 'CHATROOM' ? sendMessage() : sendPrivateMessage()">
               <i class="fas fa-paper-plane"></i>
             </button>
           </div>
@@ -56,18 +157,33 @@
       </div>
     </div>
   </div>
+
+  <!-- Login Template -->
   <ng-template #registerForm>
     <div class="register">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Welcome to ChatApp</h5>
-          <p class="card-text">Enter your name to join the conversation</p>
-          <div class="input-group mb-3">
-            <input type="text" class="form-control" id="user-name" placeholder="Your name" [(ngModel)]="userData.username">
-            <button class="btn btn-primary" type="button" (click)="connect()">
-              <i class="fas fa-sign-in-alt"></i> Join Chat
-            </button>
+      <div class="login-card">
+        <div class="login-header">
+          <i class="fas fa-comments chat-icon"></i>
+          <h3>Bem-vindo ao Chat</h3>
+          <p>Entre com seu nome para começar</p>
+        </div>
+        <div class="login-form">
+          <div class="form-floating mb-3">
+            <input
+              type="text"
+              class="form-control"
+              id="username"
+              placeholder="Seu nome"
+              [(ngModel)]="userData.username">
+            <label for="username">Seu nome</label>
           </div>
+          <button
+            class="btn btn-primary w-100"
+            (click)="connect()"
+            [disabled]="!userData.username">
+            <i class="fas fa-sign-in-alt me-2"></i>
+            Entrar no Chat
+          </button>
         </div>
       </div>
     </div>

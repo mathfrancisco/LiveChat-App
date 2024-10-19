@@ -22,6 +22,7 @@
     "@types/sockjs-client": "^1.5.4",
     "bootstrap": "^5.3.3",
     "buffer": "^6.0.3",
+    "emoji-picker-element": "^1.22.8",
     "rxjs": "~7.8.0",
     "sockjs-client": "^1.6.1",
     "tslib": "^2.3.0",

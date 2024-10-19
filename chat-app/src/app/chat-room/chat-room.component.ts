@@ -1,6 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {Component, OnInit, OnDestroy, ViewChild, ElementRef} from '@angular/core';
 import { WebSocketService } from '../services/web-socket.service';
 import { Subscription } from 'rxjs';
+import 'emoji-picker-element';
 
 @Component({
   selector: 'app-chat-room',
@@ -18,6 +19,12 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     connected: false,
     message: ''
   };
+  showEmojiPicker = false;
+
+
+  @ViewChild('messageInput', { static: false }) messageInput!: ElementRef;
+
+
 
   private subscriptions: Subscription[] = [];
 
@@ -117,5 +124,37 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
       this.userData.connected = false;
     }
   }
+
+  toggleEmojiPicker(event: Event): void {
+    event.stopPropagation(); // Impede o fechamento ao clicar dentro do emoji picker
+    this.showEmojiPicker = !this.showEmojiPicker;
+  }
+
+  onEmojiSelect(event: any): void {
+    const emoji = event.emoji.native; // Supondo que o evento retorne o emoji selecionado
+    const inputElement = this.messageInput.nativeElement;
+
+    // Insere o emoji na posição atual do cursor no campo de entrada
+    const start = inputElement.selectionStart;
+    const end = inputElement.selectionEnd;
+    const textBeforeCursor = this.userData.message.substring(0, start);
+    const textAfterCursor = this.userData.message.substring(end);
+
+    // Atualiza a mensagem com o emoji adicionado
+    this.userData.message = textBeforeCursor + emoji + textAfterCursor;
+
+    // Coloca o cursor após o emoji inserido
+    setTimeout(() => {
+      inputElement.setSelectionRange(start + emoji.length, start + emoji.length);
+      inputElement.focus();
+    }, 0);
+
+    // Fecha o emoji picker após a seleção
+    this.showEmojiPicker = false;
+  }
+
+
+
+
 
 }
