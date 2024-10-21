@@ -54,10 +54,14 @@
             <div class="user-avatar">
               {{ userData.username[0].toUpperCase() }}
             </div>
+
             <div class="user-details">
               <h6 class="mb-0">{{ userData.username }}</h6>
               <small class="text-muted">Online</small>
             </div>
+            <button class="btn btn-icon" (click)="toggleDarkMode()">
+              <i class="fas" [ngClass]="{'fa-moon': !isDarkMode, 'fa-sun': isDarkMode}"></i>
+            </button>
           </div>
           <button class="btn btn-icon" (click)="disconnect()">
             <i class="fas fa-sign-out-alt"></i>
@@ -141,12 +145,21 @@
             <button
               class="btn btn-icon emoji-btn"
               [class.active]="showEmojiPicker"
-              (click)="toggleEmojiPicker($event)">
+              (click)="toggleEmojiPicker()">
               <i class="far fa-smile"></i>
             </button>
-            <div *ngIf="showEmojiPicker" class="emoji-picker-wrapper" #emojiPicker>
-              <emoji-picker (click)="onEmojiSelect($event)"></emoji-picker>
-            </div>
+            <emoji-mart class="emoji-mart" *ngIf="showEmojiPicker"
+                        (emojiSelect)="addEmoji($event)"
+                        [style]="{ position: 'absolute', bottom: '50px', right: '0' }"
+                        [darkMode]="false"
+                        [set]="'google'"
+                        [enableFrequentEmojiSort]="true"
+                        [showPreview]="false"
+                        [emojiSize]="20"
+                        [emojiTooltip]="true"
+                        [title]="'Escolha um emoji'"
+                        [i18n]="{ search: 'Pesquisar', categories: { search: 'Resultados da pesquisa', recent: 'Recentes' } }">
+            </emoji-mart>
             <button
               class="btn btn-primary send-btn"
               (click)="tab === 'CHATROOM' ? sendMessage() : sendPrivateMessage()">

@@ -1,7 +1,7 @@
-import {Component, OnInit, OnDestroy, ViewChild, ElementRef} from '@angular/core';
+import {Component, OnInit, OnDestroy, ViewChild, ElementRef, Renderer2, NgZone} from '@angular/core';
 import { WebSocketService } from '../services/web-socket.service';
-import { Subscription } from 'rxjs';
-import 'emoji-picker-element';
+import {Observable, Subscription,Observer} from 'rxjs';
+import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
 @Component({
   selector: 'app-chat-room',
@@ -9,6 +9,7 @@ import 'emoji-picker-element';
   styleUrls: ['./chat-room.component.css']
 })
 export class ChatRoomComponent implements OnInit, OnDestroy {
+  isDarkMode = false;
   privateChats: Map<string, any[]> = new Map<string, any[]>();
   publicChats: any[] = [];
   connectedUsers: string[] = [];
@@ -21,16 +22,37 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   };
   showEmojiPicker = false;
 
-
   @ViewChild('messageInput', { static: false }) messageInput!: ElementRef;
-
-
-
+  private themeChangeSubscription?: Subscription;
   private subscriptions: Subscription[] = [];
 
-  constructor(private webSocketService: WebSocketService) {}
+  constructor(
+    private webSocketService: WebSocketService,
+    private renderer: Renderer2,
+    private ngZone: NgZone
+  ) {}
 
   ngOnInit() {
+    this.initializeTheme();
+    if (window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      this.themeChangeSubscription = new Observable((observer: Observer<boolean>) => {
+        // Usando o método correto para adicionar listener
+        const handler = (e: MediaQueryListEvent) => observer.next(e.matches);
+        mediaQuery.addEventListener('change', handler);
+        // Emite o valor inicial
+        observer.next(mediaQuery.matches);
+        // Cleanup
+        return () => mediaQuery.removeEventListener('change', handler);
+      }).subscribe((isDarkMode: boolean) => {
+        if (localStorage.getItem('darkMode') === null) {
+          this.ngZone.run(() => {
+            this.isDarkMode = isDarkMode;
+            this.applyTheme();
+          });
+        }
+      });
+    }
     this.subscriptions.push(
       this.webSocketService.publicMessages$.subscribe(message => {
         if (message) {
@@ -44,7 +66,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
       }),
       this.webSocketService.connectedUsers$.subscribe(users => {
         this.connectedUsers = users;
-      })
+      }),
     );
   }
 
@@ -53,6 +75,38 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     if (this.userData.connected) {
       this.webSocketService.disconnect(this.userData.username);
     }
+  }
+
+
+  toggleDarkMode(): void {
+    this.isDarkMode = !this.isDarkMode;
+    this.applyTheme();
+    localStorage.setItem('darkMode', this.isDarkMode.toString());
+  }
+
+  private initializeTheme(): void {
+    const savedTheme = localStorage.getItem('darkMode');
+
+    if (savedTheme !== null) {
+      this.isDarkMode = savedTheme === 'true';
+    } else {
+      this.isDarkMode = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+    }
+
+    this.applyTheme();
+  }
+
+  private applyTheme(): void {
+    this.ngZone.run(() => {
+      const body = document.body;
+      if (this.isDarkMode) {
+        this.renderer.addClass(body, 'dark-mode');
+        this.renderer.setAttribute(body, 'data-theme', 'dark');
+      } else {
+        this.renderer.removeClass(body, 'dark-mode');
+        this.renderer.setAttribute(body, 'data-theme', 'light');
+      }
+    });
   }
 
   connect() {
@@ -125,36 +179,26 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleEmojiPicker(event: Event): void {
-    event.stopPropagation(); // Impede o fechamento ao clicar dentro do emoji picker
+  toggleEmojiPicker(): void {
     this.showEmojiPicker = !this.showEmojiPicker;
   }
 
-  onEmojiSelect(event: any): void {
-    const emoji = event.emoji.native; // Supondo que o evento retorne o emoji selecionado
+  addEmoji(event: EmojiEvent): void {
     const inputElement = this.messageInput.nativeElement;
+    const emoji = event.emoji?.native;
 
-    // Insere o emoji na posição atual do cursor no campo de entrada
+    if (!emoji) {
+      return; // Caso o emoji seja undefined, interrompe a execução do método.
+    }
     const start = inputElement.selectionStart;
     const end = inputElement.selectionEnd;
-    const textBeforeCursor = this.userData.message.substring(0, start);
-    const textAfterCursor = this.userData.message.substring(end);
-
-    // Atualiza a mensagem com o emoji adicionado
-    this.userData.message = textBeforeCursor + emoji + textAfterCursor;
-
-    // Coloca o cursor após o emoji inserido
-    setTimeout(() => {
-      inputElement.setSelectionRange(start + emoji.length, start + emoji.length);
-      inputElement.focus();
-    }, 0);
-
-    // Fecha o emoji picker após a seleção
+    const text = this.userData.message;
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+    this.userData.message = before + emoji + after;
+    inputElement.setSelectionRange(start + emoji.length, start + emoji.length);
     this.showEmojiPicker = false;
+    inputElement.focus();
   }
-
-
-
-
 
 }

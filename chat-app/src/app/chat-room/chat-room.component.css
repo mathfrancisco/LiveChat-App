@@ -7,6 +7,7 @@
   --sidebar-width: 280px;
 }
 
+
 /* Resets e ajustes globais */
 body {
   font-family: 'Inter', var(--bs-body-font-family);
@@ -363,6 +364,109 @@ emoji-picker {
 
 .emoji-btn.active {
   color: #385898;
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+.dark-mode .chat-box {
+  background: #2a2a2a;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .member-list {
+  background: #2a2a2a;
+  border-right-color: #3a3a3a;
+}
+
+.dark-mode .sidebar-header,
+.dark-mode .chat-header,
+.dark-mode .chat-footer {
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+}
+
+.dark-mode .search-box .input-group,
+.dark-mode .chat-footer .input-group {
+  background: #3a3a3a;
+}
+
+.dark-mode .search-box .input-group-text,
+.dark-mode .search-box .form-control,
+.dark-mode .chat-footer .form-control {
+  color: #e0e0e0;
+}
+
+.dark-mode .chat-item:hover {
+  background-color: #3a3a3a;
+}
+
+.dark-mode .chat-item.active {
+  background-color: rgba(var(--bs-primary-rgb), 0.2);
+}
+
+.dark-mode .chat-messages {
+  background: #2a2a2a;
+}
+
+.dark-mode .message-bubble {
+  background: #3a3a3a;
+  color: #e0e0e0;
+}
+
+.dark-mode .message.self .message-bubble {
+  background: var(--bs-primary);
+}
+
+.dark-mode .btn-icon {
+  color: #e0e0e0;
+}
+
+.dark-mode .btn-icon:hover {
+  background-color: #3a3a3a;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
+
+.dark-mode emoji-picker {
+  --background: #2a2a2a;
+  --input-border-color: #3a3a3a;
+  --input-font-color: #e0e0e0;
+  --input-placeholder-color: #a0a0a0;
+}
+
+/* Login screen dark mode */
+.dark-mode .register {
+  background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+}
+
+.dark-mode .login-card {
+  background: #2a2a2a;
+  box-shadow: 0 1rem 2rem rgba(0,0,0,0.3);
+}
+
+.dark-mode .login-card h3,
+.dark-mode .login-card p {
+  color: #e0e0e0;
+}
+
+.dark-mode .form-floating input {
+  background-color: #3a3a3a;
+  color: #e0e0e0;
+  border-color: #4a4a4a;
+}
+
+.dark-mode .form-floating label {
+  color: #a0a0a0;
 }
 
 /* Responsividade */
