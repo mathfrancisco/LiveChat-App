@@ -36,13 +36,9 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.subscribeToWebSockets();
-    this.isDarkMode$.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(isDark => {
-      // Força a atualização das classes CSS
-      document.documentElement.classList.toggle('dark-mode', isDark);
-      document.body.classList.toggle('dark-mode', isDark);
-    });
+    const isDark = this.themeService.isDarkMode();
+    document.documentElement.classList.toggle('dark-mode', isDark);
+    document.body.classList.toggle('dark-mode', isDark);
   }
 
   private subscribeToWebSockets(): void {
