@@ -39,10 +39,10 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     this.isDarkMode$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(isDark => {
-      // Você pode adicionar lógica adicional aqui se necessário
-      console.log('Theme changed:', isDark);
+      // Força a atualização das classes CSS
+      document.documentElement.classList.toggle('dark-mode', isDark);
+      document.body.classList.toggle('dark-mode', isDark);
     });
-
   }
 
   private subscribeToWebSockets(): void {

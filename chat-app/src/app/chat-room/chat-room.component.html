@@ -87,7 +87,7 @@
               <i class="fas fa-info-circle"></i>
             </button>
             <button class="btn btn-icon" (click)="toggleDarkMode()">
-              <i class="bi" [ngClass]="{'bi-moon-fill': !(isDarkMode$ | async), 'bi-sun-fill': (isDarkMode$ | async)}"></i>
+              <i class="bi" [class.bi-moon-fill]="!(isDarkMode$ | async)" [class.bi-sun-fill]="(isDarkMode$ | async)"></i>
             </button>
           </div>
         </div>
