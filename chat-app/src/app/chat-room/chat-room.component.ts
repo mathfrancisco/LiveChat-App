@@ -27,13 +27,21 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   showEmojiPicker = false;
 
   @ViewChild('messageInput', { static: false }) messageInput!: ElementRef;
+  allowedFileTypes = 'image/*,.pdf';
+  maxFileSize = 5 * 1024 * 1024; // 5MB
   private destroy$ = new Subject<void>();
 
   constructor(
     private webSocketService: WebSocketService,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private fileUploadService: FileUploadService,
+    private snackBar: MatSnackBar
   ) {}
-
+  
+   // Add new methods
+  triggerFileInput(): void {
+    this.fileInput.nativeElement.click();
+  }
   ngOnInit() {
     this.subscribeToWebSockets();
     const isDark = this.themeService.isDarkMode();
@@ -91,6 +99,48 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     inputElement.setSelectionRange(start + emoji.length, start + emoji.length);
     this.showEmojiPicker = false;
     inputElement.focus();
+  }
+  async handleFileUpload(event: any): Promise<void> {
+    const file = event.target.files[0];
+    
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.match(/image.*/) && file.type !== 'application/pdf') {
+      this.snackBar.open('Apenas imagens e PDFs são permitidos', 'Fechar', { duration: 3000 });
+      return;
+    }
+
+    // Validate file size
+    if (file.size > this.maxFileSize) {
+      this.snackBar.open('Arquivo muito grande. Máximo 5MB', 'Fechar', { duration: 3000 });
+      return;
+    }
+
+    try {
+      const uploadResult = await this.fileUploadService.uploadFile(file).toPromise();
+      
+      const message = {
+        senderName: this.userData.username,
+        receiverName: this.tab === 'CHATROOM' ? '' : this.tab,
+        message: file.name,
+        status: "MESSAGE",
+        fileInfo: {
+          fileName: file.name,
+          fileType: file.type,
+          fileUrl: uploadResult.fileUrl,
+          fileSize: file.size
+        }
+      };
+
+      if (this.tab === 'CHATROOM') {
+        this.webSocketService.sendPublicMessage(message);
+      } else {
+        this.webSocketService.sendPrivateMessage(message);
+      }
+    } catch (error) {
+      this.snackBar.open('Erro ao enviar arquivo', 'Fechar', { duration: 3000 });
+    }
   }
 
   // Métodos do Chat
