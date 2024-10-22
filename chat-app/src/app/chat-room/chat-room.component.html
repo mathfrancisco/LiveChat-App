@@ -109,7 +109,37 @@
                   <span class="sender-name">{{ chat.senderName }}</span>
                   <span class="message-time">12:00</span>
                 </div>
-                <p class="message-text">{{ chat.message }}</p>
+                <p class="message-text" *ngIf="!chat.fileInfo">{{ chat.message }}</p>
+                <div class="file-message" *ngIf="chat.fileInfo">
+    <div [ngClass]="{'image-preview': chat.fileInfo.fileType.startsWith('image'),
+                     'pdf-preview': chat.fileInfo.fileType === 'application/pdf'}">
+      
+      <!-- Image preview -->
+      <img *ngIf="chat.fileInfo.fileType.startsWith('image')"
+           [src]="chat.fileInfo.fileUrl"
+           [alt]="chat.fileInfo.fileName"
+           class="img-preview">
+           
+      <!-- PDF preview -->
+      <div *ngIf="chat.fileInfo.fileType === 'application/pdf'" class="pdf-icon">
+        <i class="fas fa-file-pdf"></i>
+      </div>
+      
+      <!-- File info -->
+      <div class="file-info">
+        <span class="file-name">{{ chat.fileInfo.fileName }}</span>
+        <span class="file-size">{{ (chat.fileInfo.fileSize / 1024).toFixed(1) }} KB</span>
+      </div>
+      
+      <!-- Download link -->
+      <a [href]="chat.fileInfo.fileUrl" 
+         download 
+         class="download-link">
+        <i class="fas fa-download"></i>
+      </a>
+    </div>
+  </div>
+</div>
               </div>
             </div>
           </div>
@@ -136,8 +166,14 @@
 
         <div class="chat-footer">
           <div class="input-group">
-            <button class="btn btn-icon">
-              <i class="fas fa-paperclip"></i>
+            <input
+            #fileInput 
+            type="file" 
+            [accept]="allowedFileTypes"
+            class="d-none"
+            (change)="handleFileUpload($event)">
+            <button class="btn btn-icon" (click)="triggerFileInput()">
+            <i class="fas fa-paperclip"></i>
             </button>
             <input
               type="text"
