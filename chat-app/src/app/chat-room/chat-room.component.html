@@ -1,6 +1,5 @@
-<!DOCTYPE html>
-<div class="container-fluid mt-3" >
-  <div *ngIf="userData.connected; else registerForm" class="chat-box" >
+<div class="container-fluid mt-3">
+  <div *ngIf="userData.connected; else registerForm" class="chat-box">
     <div class="row h-100">
       <!-- Sidebar -->
       <div class="col-md-3 member-list p-0">
@@ -86,15 +85,15 @@
             <button class="btn btn-icon">
               <i class="fas fa-info-circle"></i>
             </button>
-            <button 
-      class="btn btn-icon" 
-      (click)="toggleDarkMode()"
-      [attr.aria-label]="(isDarkMode$ | async) ? 'Ativar modo claro' : 'Ativar modo escuro'">
-      <i class="bi" 
-         [class.bi-moon-fill]="!(isDarkMode$ | async)" 
-         [class.bi-sun-fill]="(isDarkMode$ | async)">
-      </i>
-    </button>
+            <button
+              class="btn btn-icon"
+              (click)="toggleDarkMode()"
+              [attr.aria-label]="(isDarkMode$ | async) ? 'Ativar modo claro' : 'Ativar modo escuro'">
+              <i class="bi"
+                 [class.bi-moon-fill]="!(isDarkMode$ | async)"
+                 [class.bi-sun-fill]="(isDarkMode$ | async)">
+              </i>
+            </button>
           </div>
         </div>
 
@@ -109,7 +108,36 @@
                   <span class="sender-name">{{ chat.senderName }}</span>
                   <span class="message-time">12:00</span>
                 </div>
-                <p class="message-text">{{ chat.message }}</p>
+                <p class="message-text" *ngIf="!chat.fileInfo">{{ chat.message }}</p>
+                <div class="file-message" *ngIf="chat.fileInfo">
+                  <div [ngClass]="{'image-preview': chat.fileInfo.fileType.startsWith('image'),
+                     'pdf-preview': chat.fileInfo.fileType === 'application/pdf'}">
+
+                    <!-- Image preview -->
+                    <img *ngIf="chat.fileInfo.fileType.startsWith('image')"
+                         [src]="chat.fileInfo.fileUrl"
+                         [alt]="chat.fileInfo.fileName"
+                         class="img-preview">
+
+                    <!-- PDF preview -->
+                    <div *ngIf="chat.fileInfo.fileType === 'application/pdf'" class="pdf-icon">
+                      <i class="fas fa-file-pdf"></i>
+                    </div>
+
+                    <!-- File info -->
+                    <div class="file-info">
+                      <span class="file-name">{{ chat.fileInfo.fileName }}</span>
+                      <span class="file-size">{{ (chat.fileInfo.fileSize / 1024).toFixed(1) }} KB</span>
+                    </div>
+
+                    <!-- Download link -->
+                    <a [href]="chat.fileInfo.fileUrl"
+                       download
+                       class="download-link">
+                      <i class="fas fa-download"></i>
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -136,7 +164,13 @@
 
         <div class="chat-footer">
           <div class="input-group">
-            <button class="btn btn-icon">
+            <input
+              #fileInput
+              type="file"
+              [accept]="allowedFileTypes"
+              class="d-none"
+              (change)="handleFileUpload($event)">
+            <button class="btn btn-icon" (click)="triggerFileInput()">
               <i class="fas fa-paperclip"></i>
             </button>
             <input
@@ -166,12 +200,12 @@
               [emojiTooltip]="true"
               [title]="'Escolha um emoji'"
               [i18n]="{
-              search: 'Pesquisar',
-              categories: {
-              search: 'Resultados da pesquisa',
-              recent: 'Recentes'
-              }
-              }">
+                search: 'Pesquisar',
+                categories: {
+                search: 'Resultados da pesquisa',
+                recent: 'Recentes'
+                }
+                }">
             </emoji-mart>
             <button
               class="btn btn-primary send-btn"
@@ -181,37 +215,37 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> <!-- Fechamento da div row h-100 que estava faltando -->
   </div>
+</div>
 
-  <!-- Login Template -->
-  <ng-template #registerForm>
-    <div class="register">
-      <div class="login-card">
-        <div class="login-header">
-          <i class="fas fa-comments chat-icon"></i>
-          <h3>Bem-vindo ao Chat</h3>
-          <p>Entre com seu nome para começar</p>
+<!-- Login Template -->
+<ng-template #registerForm>
+  <div class="register">
+    <div class="login-card">
+      <div class="login-header">
+        <i class="fas fa-comments chat-icon"></i>
+        <h3>Bem-vindo ao Chat</h3>
+        <p>Entre com seu nome para começar</p>
+      </div>
+      <div class="login-form">
+        <div class="form-floating mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="username"
+            placeholder="Seu nome"
+            [(ngModel)]="userData.username">
+          <label for="username">Seu nome</label>
         </div>
-        <div class="login-form">
-          <div class="form-floating mb-3">
-            <input
-              type="text"
-              class="form-control"
-              id="username"
-              placeholder="Seu nome"
-              [(ngModel)]="userData.username">
-            <label for="username">Seu nome</label>
-          </div>
-          <button
-            class="btn btn-primary w-100"
-            (click)="connect()"
-            [disabled]="!userData.username">
-            <i class="fas fa-sign-in-alt me-2"></i>
-            Entrar no Chat
-          </button>
-        </div>
+        <button
+          class="btn btn-primary w-100"
+          (click)="connect()"
+          [disabled]="!userData.username">
+          <i class="fas fa-sign-in-alt me-2"></i>
+          Entrar no Chat
+        </button>
       </div>
     </div>
-  </ng-template>
-</div>
+  </div>
+</ng-template>

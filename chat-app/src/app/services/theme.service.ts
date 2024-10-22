@@ -47,22 +47,22 @@ export class ThemeService {
   private setTheme(isDark: boolean): void {
     // Atualiza o estado interno
     this.darkMode.next(isDark);
-    
+
     // Aplica as classes corretamente
     requestAnimationFrame(() => {
       document.documentElement.classList.toggle('dark-mode', isDark);
       document.body.classList.toggle('dark-mode', isDark);
     });
-    
+
     // Salva a preferência
     localStorage.setItem('darkMode', isDark.toString());
   }
 
   toggleTheme(): void {
-  console.log('Tema anterior:', this.darkMode.value);
-  this.setTheme(!this.darkMode.value);
-  console.log('Novo tema:', this.darkMode.value);
-}
+    console.log('Tema anterior:', this.darkMode.value);
+    this.setTheme(!this.darkMode.value);
+    console.log('Novo tema:', this.darkMode.value);
+  }
 
   // Método para verificar o tema atual
   isDarkMode(): boolean {

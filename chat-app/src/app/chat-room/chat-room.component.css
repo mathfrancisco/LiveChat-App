@@ -23,7 +23,7 @@
   --active-chat-bg: rgba(var(--bs-primary-rgb), 0.1);
   --emoji-picker-bg: var(--bs-white);
 
-  }
+}
 
 
 
@@ -50,6 +50,7 @@ body {
   font-family: 'Inter', var(--bs-body-font-family);
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  font-size: 16px;
 }
 
 /* Layout principal */
@@ -73,6 +74,18 @@ body {
 .sidebar-header {
   padding: 1rem;
   border-bottom: 1px solid var(--bs-gray-200);
+}
+.sidebar-header h4 {
+  font-size: 18px; /* Aumente conforme necessário */
+}
+.chat-item-info h6 {
+  font-size: 16px;
+}
+.chat-item-info p {
+  font-size: 14px;
+}
+.message-content .message-text {
+  font-size: 15px; /* Ajuste para o tamanho desejado */
 }
 
 /* Ajuste do input de busca */
@@ -506,6 +519,78 @@ body.dark-mode {
 
 .dark-mode .form-floating label {
   color: #a0a0a0;
+}
+
+.file-message {
+  max-width: 300px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.image-preview {
+  position: relative;
+}
+
+.image-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 4px;
+}
+
+.pdf-preview {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+}
+
+.pdf-icon {
+  font-size: 32px;
+  color: #e74c3c;
+  margin-right: 12px;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+}
+
+.file-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.file-size {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.download-link {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.download-link:hover {
+  transform: scale(1.1);
+}
+
+.dark-mode .file-message {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .download-link {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
 }
 
 /* Responsividade */
