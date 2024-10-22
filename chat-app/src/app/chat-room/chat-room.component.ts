@@ -1,6 +1,8 @@
-import {Component, OnInit, OnDestroy, ViewChild, ElementRef, Renderer2, NgZone} from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { WebSocketService } from '../services/web-socket.service';
-import {Observable, Subscription,Observer} from 'rxjs';
+import { ThemeService } from '../services/theme.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
 @Component({
@@ -9,7 +11,9 @@ import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
   styleUrls: ['./chat-room.component.css']
 })
 export class ChatRoomComponent implements OnInit, OnDestroy {
-  isDarkMode = false;
+  // Observable do tema
+  isDarkMode$ = this.themeService.darkMode$;
+
   privateChats: Map<string, any[]> = new Map<string, any[]>();
   publicChats: any[] = [];
   connectedUsers: string[] = [];
@@ -23,112 +27,94 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   showEmojiPicker = false;
 
   @ViewChild('messageInput', { static: false }) messageInput!: ElementRef;
-  private themeChangeSubscription?: Subscription;
-  private subscriptions: Subscription[] = [];
+  private destroy$ = new Subject<void>();
 
   constructor(
     private webSocketService: WebSocketService,
-    private renderer: Renderer2,
-    private ngZone: NgZone
+    private themeService: ThemeService
   ) {}
 
   ngOnInit() {
-    this.initializeTheme();
-    if (window.matchMedia) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      this.themeChangeSubscription = new Observable((observer: Observer<boolean>) => {
-        // Usando o método correto para adicionar listener
-        const handler = (e: MediaQueryListEvent) => observer.next(e.matches);
-        mediaQuery.addEventListener('change', handler);
-        // Emite o valor inicial
-        observer.next(mediaQuery.matches);
-        // Cleanup
-        return () => mediaQuery.removeEventListener('change', handler);
-      }).subscribe((isDarkMode: boolean) => {
-        if (localStorage.getItem('darkMode') === null) {
-          this.ngZone.run(() => {
-            this.isDarkMode = isDarkMode;
-            this.applyTheme();
-          });
-        }
-      });
-    }
-    this.subscriptions.push(
-      this.webSocketService.publicMessages$.subscribe(message => {
+    this.subscribeToWebSockets();
+    this.isDarkMode$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(isDark => {
+      // Você pode adicionar lógica adicional aqui se necessário
+      console.log('Theme changed:', isDark);
+    });
+
+  }
+
+  private subscribeToWebSockets(): void {
+    this.webSocketService.publicMessages$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(message => {
         if (message) {
           this.handleMessage(message);
         }
-      }),
-      this.webSocketService.privateMessages$.subscribe(message => {
+      });
+
+    this.webSocketService.privateMessages$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(message => {
         if (message) {
           this.handlePrivateMessage(message);
         }
-      }),
-      this.webSocketService.connectedUsers$.subscribe(users => {
+      });
+
+    this.webSocketService.connectedUsers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(users => {
         this.connectedUsers = users;
-      }),
-    );
+      });
   }
 
-  ngOnDestroy() {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
-    if (this.userData.connected) {
-      this.webSocketService.disconnect(this.userData.username);
-    }
-  }
-
-
+  // Métodos do tema
   toggleDarkMode(): void {
-    this.isDarkMode = !this.isDarkMode;
-    this.applyTheme();
-    localStorage.setItem('darkMode', this.isDarkMode.toString());
+    this.themeService.toggleTheme();
   }
 
-  private initializeTheme(): void {
-    const savedTheme = localStorage.getItem('darkMode');
-
-    if (savedTheme !== null) {
-      this.isDarkMode = savedTheme === 'true';
-    } else {
-      this.isDarkMode = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
-    }
-
-    this.applyTheme();
+  // Métodos do Emoji
+  toggleEmojiPicker(): void {
+    this.showEmojiPicker = !this.showEmojiPicker;
   }
 
-  private applyTheme(): void {
-    this.ngZone.run(() => {
-      const body = document.body;
-      if (this.isDarkMode) {
-        this.renderer.addClass(body, 'dark-mode');
-        this.renderer.setAttribute(body, 'data-theme', 'dark');
-      } else {
-        this.renderer.removeClass(body, 'dark-mode');
-        this.renderer.setAttribute(body, 'data-theme', 'light');
-      }
-    });
+  addEmoji(event: EmojiEvent): void {
+    const inputElement = this.messageInput.nativeElement;
+    const emoji = event.emoji?.native;
+
+    if (!emoji) return;
+
+    const start = inputElement.selectionStart;
+    const end = inputElement.selectionEnd;
+    const text = this.userData.message;
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+
+    this.userData.message = before + emoji + after;
+    inputElement.setSelectionRange(start + emoji.length, start + emoji.length);
+    this.showEmojiPicker = false;
+    inputElement.focus();
   }
 
+  // Métodos do Chat
   connect() {
     this.webSocketService.connect(this.userData.username);
     this.userData.connected = true;
   }
 
   handleMessage(payloadData: any) {
-    switch(payloadData.status) {
-      case "JOIN":
-      case "LEAVE":
-        // Connected users are now handled by the WebSocketService
-        break;
-      case "MESSAGE":
-        this.publicChats = [...this.publicChats, payloadData];
-        break;
+    if (payloadData.status === "MESSAGE") {
+      this.publicChats = [...this.publicChats, payloadData];
     }
   }
 
   handlePrivateMessage(payloadData: any) {
-    const chatPartner = payloadData.senderName === this.userData.username ? payloadData.receiverName : payloadData.senderName;
-    if(this.privateChats.has(chatPartner)) {
+    const chatPartner = payloadData.senderName === this.userData.username
+      ? payloadData.receiverName
+      : payloadData.senderName;
+
+    if (this.privateChats.has(chatPartner)) {
       const existingChats = this.privateChats.get(chatPartner) || [];
       this.privateChats.set(chatPartner, [...existingChats, payloadData]);
     } else {
@@ -179,26 +165,12 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleEmojiPicker(): void {
-    this.showEmojiPicker = !this.showEmojiPicker;
-  }
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
 
-  addEmoji(event: EmojiEvent): void {
-    const inputElement = this.messageInput.nativeElement;
-    const emoji = event.emoji?.native;
-
-    if (!emoji) {
-      return; // Caso o emoji seja undefined, interrompe a execução do método.
+    if (this.userData.connected) {
+      this.webSocketService.disconnect(this.userData.username);
     }
-    const start = inputElement.selectionStart;
-    const end = inputElement.selectionEnd;
-    const text = this.userData.message;
-    const before = text.substring(0, start);
-    const after = text.substring(end, text.length);
-    this.userData.message = before + emoji + after;
-    inputElement.setSelectionRange(start + emoji.length, start + emoji.length);
-    this.showEmojiPicker = false;
-    inputElement.focus();
   }
-
 }

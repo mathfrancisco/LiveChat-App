@@ -5,6 +5,41 @@
   --chat-header-height: 70px;
   --chat-footer-height: 70px;
   --sidebar-width: 280px;
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --text-primary: #000000;
+  --text-secondary: #6c757d;
+  --border-color: #dee2e6;
+  --message-bg: #ffffff;
+  --message-self-bg: var(--bs-primary);
+  --sidebar-bg: #ffffff;
+  --input-bg: #f8f9fa;
+  --chat-box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --header-footer-bg: #ffffff;
+  --hover-bg: #f8f9fa;
+  --active-chat-bg: rgba(var(--bs-primary-rgb), 0.1);
+  --emoji-picker-bg: #ffffff;
+
+  }
+
+
+
+:root.dark-mode {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2a2a2a;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --border-color: #3a3a3a;
+  --message-bg: #3a3a3a;
+  --message-self-bg: var(--bs-primary);
+  --sidebar-bg: #2a2a2a;
+  --input-bg: #3a3a3a;
+  --chat-box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+  --header-footer-bg: #2a2a2a;
+  --hover-bg: #3a3a3a;
+  --active-chat-bg: rgba(var(--bs-primary-rgb), 0.2);
+  --emoji-picker-bg: #2a2a2a;
 }
 
 

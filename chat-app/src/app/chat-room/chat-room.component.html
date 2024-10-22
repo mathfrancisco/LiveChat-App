@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<div class="container-fluid mt-3">
-  <div *ngIf="userData.connected; else registerForm" class="chat-box">
+<div class="container-fluid mt-3" >
+  <div *ngIf="userData.connected; else registerForm" class="chat-box" >
     <div class="row h-100">
       <!-- Sidebar -->
       <div class="col-md-3 member-list p-0">
@@ -54,14 +54,10 @@
             <div class="user-avatar">
               {{ userData.username[0].toUpperCase() }}
             </div>
-
             <div class="user-details">
               <h6 class="mb-0">{{ userData.username }}</h6>
               <small class="text-muted">Online</small>
             </div>
-            <button class="btn btn-icon" (click)="toggleDarkMode()">
-              <i class="fas" [ngClass]="{'fa-moon': !isDarkMode, 'fa-sun': isDarkMode}"></i>
-            </button>
           </div>
           <button class="btn btn-icon" (click)="disconnect()">
             <i class="fas fa-sign-out-alt"></i>
@@ -89,6 +85,9 @@
             </button>
             <button class="btn btn-icon">
               <i class="fas fa-info-circle"></i>
+            </button>
+            <button class="btn btn-icon" (click)="toggleDarkMode()">
+              <i class="bi" [ngClass]="{'bi-moon-fill': !(isDarkMode$ | async), 'bi-sun-fill': (isDarkMode$ | async)}"></i>
             </button>
           </div>
         </div>
@@ -148,17 +147,25 @@
               (click)="toggleEmojiPicker()">
               <i class="far fa-smile"></i>
             </button>
-            <emoji-mart class="emoji-mart" *ngIf="showEmojiPicker"
-                        (emojiSelect)="addEmoji($event)"
-                        [style]="{ position: 'absolute', bottom: '50px', right: '0' }"
-                        [darkMode]="false"
-                        [set]="'google'"
-                        [enableFrequentEmojiSort]="true"
-                        [showPreview]="false"
-                        [emojiSize]="20"
-                        [emojiTooltip]="true"
-                        [title]="'Escolha um emoji'"
-                        [i18n]="{ search: 'Pesquisar', categories: { search: 'Resultados da pesquisa', recent: 'Recentes' } }">
+            <emoji-mart
+              *ngIf="showEmojiPicker"
+              class="emoji-mart"
+              (emojiSelect)="addEmoji($event)"
+              [darkMode]="(isDarkMode$ | async) ?? false"
+              [style]="{ position: 'absolute', bottom: '50px', right: '0' }"
+              [set]="'google'"
+              [enableFrequentEmojiSort]="true"
+              [showPreview]="false"
+              [emojiSize]="20"
+              [emojiTooltip]="true"
+              [title]="'Escolha um emoji'"
+              [i18n]="{
+              search: 'Pesquisar',
+              categories: {
+              search: 'Resultados da pesquisa',
+              recent: 'Recentes'
+              }
+              }">
             </emoji-mart>
             <button
               class="btn btn-primary send-btn"
