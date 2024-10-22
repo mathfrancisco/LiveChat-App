@@ -86,9 +86,15 @@
             <button class="btn btn-icon">
               <i class="fas fa-info-circle"></i>
             </button>
-            <button class="btn btn-icon" (click)="toggleDarkMode()">
-              <i class="bi" [class.bi-moon-fill]="!(isDarkMode$ | async)" [class.bi-sun-fill]="(isDarkMode$ | async)"></i>
-            </button>
+            <button 
+      class="btn btn-icon" 
+      (click)="toggleDarkMode()"
+      [attr.aria-label]="(isDarkMode$ | async) ? 'Ativar modo claro' : 'Ativar modo escuro'">
+      <i class="bi" 
+         [class.bi-moon-fill]="!(isDarkMode$ | async)" 
+         [class.bi-sun-fill]="(isDarkMode$ | async)">
+      </i>
+    </button>
           </div>
         </div>
 
