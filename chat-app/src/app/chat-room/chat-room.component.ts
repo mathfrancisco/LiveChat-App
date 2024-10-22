@@ -40,8 +40,8 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     private fileUploadService: FileUploadService,
     private snackBar: MatSnackBar
   ) {}
-
-  // Add new methods
+  
+   // Add new methods
   triggerFileInput(): void {
     this.fileInput.nativeElement.click();
   }
@@ -105,7 +105,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   }
   async handleFileUpload(event: any): Promise<void> {
     const file = event.target.files[0];
-
+    
     if (!file) return;
 
     // Validate file type
@@ -122,7 +122,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
 
     try {
       const uploadResult = await this.fileUploadService.uploadFile(file).toPromise();
-
+      
       const message = {
         senderName: this.userData.username,
         receiverName: this.tab === 'CHATROOM' ? '' : this.tab,
