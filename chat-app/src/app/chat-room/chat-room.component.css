@@ -23,7 +23,7 @@
   --active-chat-bg: rgba(var(--bs-primary-rgb), 0.1);
   --emoji-picker-bg: var(--bs-white);
 
-  }
+}
 
 
 
@@ -50,6 +50,7 @@ body {
   font-family: 'Inter', var(--bs-body-font-family);
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  font-size: 16px;
 }
 
 /* Layout principal */
@@ -73,6 +74,18 @@ body {
 .sidebar-header {
   padding: 1rem;
   border-bottom: 1px solid var(--bs-gray-200);
+}
+.sidebar-header h4 {
+  font-size: 18px; /* Aumente conforme necessário */
+}
+.chat-item-info h6 {
+  font-size: 16px;
+}
+.chat-item-info p {
+  font-size: 14px;
+}
+.message-content .message-text {
+  font-size: 15px; /* Ajuste para o tamanho desejado */
 }
 
 /* Ajuste do input de busca */
@@ -546,7 +559,7 @@ body.dark-mode {
 .file-name {
   font-weight: 500;
   font-size: 14px;
-  color: var(--text-color);
+  color: var(--text-primary);
   word-break: break-all;
 }
 
