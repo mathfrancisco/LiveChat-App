@@ -29,6 +29,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   showEmojiPicker = false;
 
   @ViewChild('messageInput', { static: false }) messageInput!: ElementRef;
+  @ViewChild('fileInput', { static: false }) fileInput!: ElementRef;
   allowedFileTypes = 'image/*,.pdf';
   maxFileSize = 5 * 1024 * 1024; // 5MB
   private destroy$ = new Subject<void>();
