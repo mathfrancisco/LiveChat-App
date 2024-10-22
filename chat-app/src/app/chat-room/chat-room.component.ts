@@ -4,6 +4,8 @@ import { ThemeService } from '../services/theme.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { FileUploadService } from '../services/file-upload.service';
 
 @Component({
   selector: 'app-chat-room',
