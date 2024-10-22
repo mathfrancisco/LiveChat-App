@@ -59,9 +59,10 @@ export class ThemeService {
   }
 
   toggleTheme(): void {
-    const currentTheme = this.darkMode.value;
-    this.setTheme(!currentTheme);
-  }
+  console.log('Tema anterior:', this.darkMode.value);
+  this.setTheme(!this.darkMode.value);
+  console.log('Novo tema:', this.darkMode.value);
+}
 
   // Método para verificar o tema atual
   isDarkMode(): boolean {
