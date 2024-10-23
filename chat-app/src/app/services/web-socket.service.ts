@@ -12,6 +12,9 @@ export class WebSocketService {
   private publicMessagesSubject = new BehaviorSubject<any>(null);
   private privateMessagesSubject = new BehaviorSubject<any>(null);
   private connectedUsersSubject = new BehaviorSubject<string[]>([]);
+  private screenShareMessagesSubject = new BehaviorSubject<any>(null);
+  screenShareMessages$ = this.screenShareMessagesSubject.asObservable();
+  private currentUser: string = '';
 
   publicMessages$ = this.publicMessagesSubject.asObservable();
   privateMessages$ = this.privateMessagesSubject.asObservable();
@@ -41,6 +44,9 @@ export class WebSocketService {
         if (payload.status === 'JOIN' || payload.status === 'LEAVE') {
           this.updateConnectedUsers(payload);
         }
+        this.client.subscribe(`/user/${username}/screen-share`, message => {
+          this.screenShareMessagesSubject.next(JSON.parse(message.body));
+        });
       });
 
       this.client.subscribe(`/user/${username}/private`, message => {
@@ -84,4 +90,19 @@ export class WebSocketService {
       this.connectedUsersSubject.next(currentUsers.filter(user => user !== payload.senderName));
     }
   }
+  sendScreenShareMessage(message: any) {
+    this.client.publish({
+      destination: '/app/screen-share',
+      body: JSON.stringify(message)
+    });
+  }
+
+  getCurrentUser(): string {
+    return this.currentUser;
+  }
+
+  getConnectedUsers(): string[] {
+    return this.connectedUsersSubject.value;
+  }
 }
+

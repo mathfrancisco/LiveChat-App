@@ -1,16 +1,18 @@
 
 /* Variáveis que complementam o Bootstrap */
 :root {
-  --bs-primary-rgb: 1, 98, 232;     /* #0162e8 */
+  --bs-primary-rgb: 1, 98, 232;
   --chat-secondary: #5a75ff;
   --chat-header-height: 70px;
   --chat-footer-height: 70px;
   --sidebar-width: 280px;
 
   /* Tema Claro - Cores Base */
+  --bs-white: #ffffff;
   --bs-body-bg: #ffffff;
   --bs-body-color: #212529;
   --bs-secondary-bg: #f8f9fa;
+  --chat-bg: var(--bs-white);          /* Nova variável */
   --chat-sidebar-bg: #f8f9fa;
   --chat-message-bg: #f8f9fa;
   --chat-self-message-bg: #0d6efd;
@@ -28,9 +30,11 @@
 
 /* Tema Escuro */
 [data-bs-theme="dark"] {
+  --bs-white: #1a1d21;
   --bs-body-bg: #1a1d21;
   --bs-body-color: #e9ecef;
   --bs-secondary-bg: #2a2e33;
+  --chat-bg: var(--bs-body-bg);        /* Nova variável no tema escuro */
   --chat-sidebar-bg: #2a2e33;
   --chat-message-bg: #2a2e33;
   --chat-message-text: #e9ecef;
@@ -45,6 +49,7 @@
   --text-secondary: #adb5bd;
   --bg-primary: #1a1d21;
   --sidebar-bg: #2a2e33;
+
 
 }
 
@@ -158,11 +163,27 @@ body {
   color: var(--text-primary);
 }
 
+[data-bs-theme="dark"] .chat-box {
+  background-color: var(--bs-body-bg);
+}
+
+[data-bs-theme="dark"] .chat-content {
+  background-color: var(--bs-body-bg);
+}
+
+[data-bs-theme="dark"] .chat-messages {
+  background-color: var(--bs-body-bg);
+}
+[data-bs-theme="dark"] .chat-header,
+[data-bs-theme="dark"] .chat-footer {
+  background-color: var(--bs-body-bg);
+  border-color: var(--border-color);
+}
 
 /* Layout principal */
 .chat-box {
   height: calc(100vh - 2rem);
-  background: var(--bg-primary);
+  background: var(--chat-bg);
   border-radius: 1rem;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
   overflow: hidden;
@@ -197,7 +218,7 @@ body {
 /* Ajuste do input de busca */
 .search-box .input-group {
   padding: 8px 12px;
-  background: var(--bs-gray-100);
+  background: var(--bs-secondary-bg);
   border-radius: 8px;
 }
 
@@ -219,6 +240,46 @@ body {
 .search-box .form-control:focus {
   box-shadow: none;
 }
+
+.screen-share-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  max-width: 300px;
+  z-index: 1000;
+}
+
+.screen-share-video {
+  position: relative;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.screen-share-video video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.video-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-icon.active {
+  color: #007bff;
+  background-color: rgba(0,123,255,0.1);
+}
+
 /* Footer da sidebar atualizado */
 .sidebar-footer {
   padding: 16px;
@@ -294,7 +355,7 @@ body {
 }
 
 .chat-item:hover {
-  background-color: var(--bs-gray-100);
+  background-color: var(--bs-secondary-bg);
 }
 
 .chat-item.active {
@@ -325,12 +386,13 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background-color: var(--chat-bg)
 }
 
 .chat-header {
   padding: 16px 24px;
-  border-bottom: 1px solid var(--bs-gray-200);
-  background: var(--bs-white);
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--chat-bg);
   height: var(--chat-header-height);
   display: flex;
   align-items: center;
@@ -374,7 +436,7 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 1.5rem;
-  background: var(--bs-gray-100);
+  background: var(--bs-body-bg);
 }
 
 /* Estilo das mensagens */
@@ -424,13 +486,13 @@ body {
 /* Footer do chat */
 .chat-footer {
   padding: 1rem;
-  background: var(--bs-white);
-  border-top: 1px solid var(--bs-gray-200);
+  background-color: var(--chat-bg);
+  border-top: 1px solid var(--border-color);
   height: var(--chat-footer-height);
 }
 
 .chat-footer .input-group {
-  background: var(--bs-gray-100);
+  background: var(--bs-secondary-bg);
   border-radius: 0.5rem;
   padding: 0.5rem;
 }
@@ -488,7 +550,7 @@ body {
 }
 
 .btn-icon:hover {
-  background-color: var(--bs-gray-100);
+  background-color: var(--bs-secondary-bg);
 }
 
 .emoji-picker-container {

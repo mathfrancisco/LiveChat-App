@@ -6,6 +6,7 @@ import { takeUntil } from 'rxjs/operators';
 import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FileUploadService } from '../services/file-upload.service';
+import {ScreenShareService} from "../services/screen-share.service";
 
 
 @Component({
@@ -16,6 +17,8 @@ import { FileUploadService } from '../services/file-upload.service';
 export class ChatRoomComponent implements OnInit, OnDestroy {
   // Observable do tema
   isDarkMode$ = this.themeService.darkMode$;
+  isScreenSharing = false;
+  remoteScreenShares: Map<string, MediaStream> = new Map();
 
 
   privateChats: Map<string, any[]> = new Map<string, any[]>();
@@ -33,6 +36,9 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
 
   @ViewChild('messageInput', { static: false }) messageInput!: ElementRef;
   @ViewChild('fileInput', { static: false }) fileInput!: ElementRef;
+  @ViewChild('videoElement') videoElement!: ElementRef<HTMLVideoElement>;
+  @ViewChild('localVideo') localVideo!: ElementRef<HTMLVideoElement>;
+
   allowedFileTypes = 'image/*,.pdf';
   maxFileSize = 5 * 1024 * 1024; // 5MB
   private destroy$ = new Subject<void>();
@@ -41,8 +47,11 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     private webSocketService: WebSocketService,
     private themeService: ThemeService,
     private fileUploadService: FileUploadService,
+    protected screenShareService: ScreenShareService,
     private snackBar: MatSnackBar
-  ) {}
+  ) { this.screenShareService.screenShareStatus$.subscribe(
+    isSharing => this.isScreenSharing = isSharing
+  );}
 
 
    // Add new methods
@@ -53,9 +62,14 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     this.subscribeToWebSockets();
     this.isDarkMode$.subscribe(isDark => {
       console.log('Component received dark mode change:', isDark);
+      this.screenShareService.screenShareStatus$.subscribe(isSharing => {
+        this.isScreenSharing = isSharing;
+        if (isSharing && this.localVideo) {
+          this.localVideo.nativeElement.srcObject = this.screenShareService.getLocalStream();
+        }
+      });
     });
   }
-
   private subscribeToWebSockets(): void {
     this.webSocketService.publicMessages$
       .pipe(takeUntil(this.destroy$))
@@ -283,6 +297,22 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     if (this.userData.connected) {
       this.webSocketService.disconnect(this.userData.username);
   }}
+
+
+  async startScreenShare() {
+    try {
+      await this.screenShareService.startScreenShare();
+      this.snackBar.open('Compartilhamento de tela iniciado', 'Fechar', { duration: 3000 });
+    } catch (error) {
+      console.error('Error starting screen share:', error);
+      this.snackBar.open('Erro ao iniciar compartilhamento de tela', 'Fechar', { duration: 3000 });
+    }
+  }
+
+  stopScreenShare() {
+    this.screenShareService.stopScreenShare();
+    this.snackBar.open('Compartilhamento de tela encerrado', 'Fechar', { duration: 3000 });
+  }
 
 
 }

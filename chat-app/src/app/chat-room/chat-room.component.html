@@ -76,14 +76,12 @@
             </div>
           </div>
           <div class="chat-actions">
-            <button class="btn btn-icon">
-              <i class="fas fa-phone"></i>
-            </button>
-            <button class="btn btn-icon">
-              <i class="fas fa-video"></i>
-            </button>
-            <button class="btn btn-icon">
-              <i class="fas fa-info-circle"></i>
+            <button
+              class="btn btn-icon"
+              [class.active]="isScreenSharing"
+              (click)="isScreenSharing ? stopScreenShare() : startScreenShare()"
+              title="Compartilhar tela">
+              <i class="fas" [class.fa-desktop]="!isScreenSharing" [class.fa-stop-circle]="isScreenSharing"></i>
             </button>
             <button
               class="btn btn-icon"
@@ -96,7 +94,38 @@
             </button>
           </div>
         </div>
-
+        <div class="screen-share-area" *ngIf="tab === 'CHATROOM'">
+          <div class="screen-share-grid" [class.active]="isScreenSharing || (remoteScreenShares.size > 0)">
+            <!-- Local screen share -->
+            <div class="screen-share-container local" *ngIf="isScreenSharing">
+              <video
+                #localVideo
+                autoplay
+                playsinline
+                muted
+                [srcObject]="screenShareService.getLocalStream()">
+              </video>
+              <div class="video-overlay">
+                <span class="badge bg-primary">Sua tela</span>
+                <button class="btn btn-danger btn-sm" (click)="stopScreenShare()">
+                  <i class="fas fa-stop-circle"></i> Parar
+                </button>
+              </div>
+            </div>
+            <!-- Remote screen shares -->
+            <div class="screen-share-container remote" *ngFor="let user of remoteScreenShares | keyvalue">
+              <video
+                [id]="'remote-screen-' + user.key"
+                autoplay
+                playsinline
+                [srcObject]="screenShareService.getRemoteStream(user.key) ?? null">
+              </video>
+              <div class="video-overlay">
+                <span class="badge bg-secondary">{{ user.key }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="chat-messages" *ngIf="tab === 'CHATROOM'; else privateChat">
           <div *ngFor="let chat of publicChats" class="message" [class.self]="chat.senderName === userData.username">
             <div class="message-content">

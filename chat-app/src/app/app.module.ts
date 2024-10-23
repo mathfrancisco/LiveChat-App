@@ -10,11 +10,13 @@ import { ChatRoomComponent } from './chat-room/chat-room.component';
 import { WebSocketService } from './services/web-socket.service';
 import { ThemeService } from './services/theme.service';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
+import {VideoSrcObjectDirective} from "./directives/video-src-object.directive";
 
 @NgModule({
   declarations: [
     AppComponent,
-    ChatRoomComponent
+    ChatRoomComponent,
+    VideoSrcObjectDirective
   ],
   imports: [
     BrowserModule,
