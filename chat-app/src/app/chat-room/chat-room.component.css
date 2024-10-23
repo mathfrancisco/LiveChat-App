@@ -46,7 +46,6 @@
   --bg-primary: #1a1d21;
   --sidebar-bg: #2a2e33;
 
-  /* Chat Footer */
 }
 
 /* Resets e ajustes globais */
@@ -84,14 +83,12 @@ body {
   background-color: var(--bs-secondary-bg);
 }
 
-/* Chat Messages */
 [data-bs-theme="dark"] .chat-messages {
   background-color: var(--bs-body-bg);
 }
 
-/* Message Bubbles */
 [data-bs-theme="dark"] .message .message-bubble {
-  background-color: var(--bs-secondary-bg);
+  background-color: var(--chat-message-bg);
   color: var(--chat-message-text);
 }
 
@@ -100,122 +97,68 @@ body {
   color: var(--chat-self-message-color);
 }
 
-/* Chat Footer */
-[data-bs-theme="dark"] .chat-footer {
-  background-color: var(--bs-body-bg);
-  border-color: var(--border-color);
+/* 3. Corrigir elementos que estão usando cores hardcoded */
+[data-bs-theme="dark"] .conversations-list .chat-item:hover {
+  background-color: var(--bs-secondary-bg);
 }
+
+[data-bs-theme="dark"] .search-box .input-group {
+  background-color: var(--input-bg);
+}
+
+[data-bs-theme="dark"] .search-box .input-group-text,
+[data-bs-theme="dark"] .search-box .form-control {
+  background-color: var(--input-bg);
+  color: var(--input-color);
+  border-color: var(--input-border-color);
+}
+
+/* 4. Corrigir background e cores dos avatares */
+[data-bs-theme="dark"] .message-avatar,
+[data-bs-theme="dark"] .user-avatar,
+[data-bs-theme="dark"] .chat-item-avatar {
+  background-color: var(--bs-secondary-bg);
+  color: var(--text-primary);
+}
+
+/* 5. Corrigir cores das seções de arquivo */
+[data-bs-theme="dark"] .file-message {
+  background-color: var(--chat-message-bg);
+}
+
 [data-bs-theme="dark"] .file-container {
   background-color: var(--bs-secondary-bg);
 }
-[data-bs-theme="dark"] .sidebar-header {
-  border-color: var(--border-color);
-}
-[data-bs-theme="dark"] .sidebar-footer {
-  border-color: var(--border-color);
+
+[data-bs-theme="dark"] .file-details {
+  background-color: var(--bs-secondary-bg);
 }
 
+/* 6. Corrigir cores do footer */
+[data-bs-theme="dark"] .chat-footer {
+  background-color: var(--bs-body-bg);
+}
 
 [data-bs-theme="dark"] .chat-footer .input-group {
   background-color: var(--bs-secondary-bg);
 }
 
-
 [data-bs-theme="dark"] .chat-footer .form-control {
   background-color: var(--bs-secondary-bg);
   color: var(--text-primary);
-  border: none;
 }
 
-[data-bs-theme="dark"] .chat-footer .form-control::placeholder {
+/* 7. Corrigir cores dos botões no tema escuro */
+[data-bs-theme="dark"] .btn-icon {
   color: var(--text-secondary);
 }
 
-[data-bs-theme="dark"] .chat-footer .btn-icon {
-  color: var(--text-secondary);
-}
-
-[data-bs-theme="dark"] .chat-footer .btn-icon:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Member List / Sidebar */
-[data-bs-theme="dark"] .member-list {
-  background-color: var(--chat-sidebar-bg);
-  border-right-color: var(--border-color);
-}
-
-/* Search Box */
-[data-bs-theme="dark"] .search-box .input-group {
-  background-color: var(--bs-secondary-bg);
-}
-
-[data-bs-theme="dark"] .search-box .input-group-text {
-  background-color: var(--bs-secondary-bg);
-  color: var(--text-secondary);
-  border: none;
-}
-
-[data-bs-theme="dark"] .search-box .form-control {
+[data-bs-theme="dark"] .btn-icon:hover {
   background-color: var(--bs-secondary-bg);
   color: var(--text-primary);
-  border: none;
 }
 
-/* Chat Items */
-[data-bs-theme="dark"] .chat-item {
-  color: var(--text-primary);
-}
 
-[data-bs-theme="dark"] .chat-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-bs-theme="dark"] .chat-item.active {
-  background-color: rgba(13, 110, 253, 0.2);
-}
-
-[data-bs-theme="dark"] .chat-item-info p {
-  color: var(--text-secondary);
-}
-
-/* Section Titles */
-[data-bs-theme="dark"] .section-title {
-  color: var(--text-secondary);
-}
-
-/* File Message */
-[data-bs-theme="dark"] .file-message {
-  background-color: var(--bs-secondary-bg);
-}
-
-[data-bs-theme="dark"] .file-name {
-  color: var(--text-primary);
-}
-
-[data-bs-theme="dark"] .file-size {
-  color: var(--text-secondary);
-}
-
-/* Emoji Picker */
-[data-bs-theme="dark"] .emoji-mart {
-  background-color: var(--bs-secondary-bg);
-  border-color: var(--border-color);
-}
-
-/* Scrollbar para tema escuro */
-[data-bs-theme="dark"] ::-webkit-scrollbar-thumb {
-  background-color: var(--border-color);
-}
-
-[data-bs-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--text-secondary);
-}
-
-[data-bs-theme="dark"] .login-card {
-  background-color: var(--card-bg);
-  color: var(--text-primary);
-}
 /* Layout principal */
 .chat-box {
   height: calc(100vh - 2rem);
@@ -650,14 +593,6 @@ emoji-picker {
   transform: scale(1.1);
 }
 
-.dark-mode .file-message {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.dark-mode .download-link {
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-}
 
 /* Responsividade */
 @media (max-width: 768px) {
