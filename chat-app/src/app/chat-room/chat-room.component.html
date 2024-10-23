@@ -110,37 +110,42 @@
                 </div>
                 <p class="message-text" *ngIf="!chat.fileInfo">{{ chat.message }}</p>
                 <div class="file-message" *ngIf="chat.fileInfo">
-                  <div [ngClass]="{'image-preview': chat.fileInfo.fileType.startsWith('image'),
-                     'pdf-preview': chat.fileInfo.fileType === 'application/pdf'}">
-
+                  <div class="file-container" [ngClass]="{'image-preview': chat.fileInfo.fileType.startsWith('image'),
+                   'pdf-preview': chat.fileInfo.fileType === 'application/pdf'}">
                     <!-- Image preview -->
-                    <img *ngIf="chat.fileInfo.fileType.startsWith('image')"
-                         [src]="chat.fileInfo.fileUrl"
-                         [alt]="chat.fileInfo.fileName"
-                         class="img-preview">
-
-                    <!-- PDF preview -->
-                    <div *ngIf="chat.fileInfo.fileType === 'application/pdf'" class="pdf-icon">
-                      <i class="fas fa-file-pdf"></i>
+                    <div class="preview-container" *ngIf="chat.fileInfo.fileType.startsWith('image')">
+                      <ng-container *ngIf="chat.fileInfo.fileUrl">
+                        <img
+                          [src]="chat.fileInfo.fileUrl"
+                          [alt]="chat.fileInfo.fileName"
+                          class="img-preview"
+                        >
+                      </ng-container>
                     </div>
+                    <!-- PDF preview -->
+                    <ng-container *ngIf="!chat.fileInfo.fileUrl">
+                      <div class="loading-preview">
+                        <i class="fas fa-spinner fa-spin"></i>
+                      </div>
+                    </ng-container>
 
                     <!-- File info -->
-                    <div class="file-info">
-                      <span class="file-name">{{ chat.fileInfo.fileName }}</span>
-                      <span class="file-size">{{ (chat.fileInfo.fileSize / 1024).toFixed(1) }} KB</span>
-                    </div>
+                      <div class="file-details">
+                        <div class="file-info">
+                          <span class="file-name">{{ chat.fileInfo.fileName }}</span>
+                          <span class="file-size">{{ (chat.fileInfo.fileSize / 1024).toFixed(1) }} KB</span>
+                        </div>
 
                     <!-- Download link -->
-                    <a [href]="chat.fileInfo.fileUrl"
-                       download
-                       class="download-link">
-                      <i class="fas fa-download"></i>
-                    </a>
+                        <button class="btn btn-download" (click)="downloadFile(chat.fileInfo.fileName)">
+                          <i class="fas fa-download"></i>
+                        </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
         </div>
 
         <ng-template #privateChat>
@@ -155,7 +160,45 @@
                     <span class="sender-name">{{ chat.senderName }}</span>
                     <span class="message-time">12:00</span>
                   </div>
-                  <p class="message-text">{{ chat.message }}</p>
+
+                  <!-- Regular text message -->
+                  <p class="message-text" *ngIf="!chat.fileInfo">{{ chat.message }}</p>
+
+                  <!-- File message -->
+                  <div class="file-message" *ngIf="chat.fileInfo">
+                    <div class="file-container" [ngClass]="{'image-preview': chat.fileInfo.fileType.startsWith('image'),
+                 'pdf-preview': chat.fileInfo.fileType === 'application/pdf'}">
+
+                      <!-- Image preview -->
+                      <div class="preview-container" *ngIf="chat.fileInfo.fileType.startsWith('image')">
+                        <img
+                          [src]="chat.fileInfo.fileUrl"
+                          [alt]="chat.fileInfo.fileName"
+                          class="img-preview"
+                          >
+                      </div>
+
+                      <!-- PDF preview -->
+                      <div class="preview-container" *ngIf="chat.fileInfo.fileType === 'application/pdf'">
+                        <div class="pdf-icon">
+                          <i class="fas fa-file-pdf fa-2x"></i>
+                        </div>
+                      </div>
+
+                      <!-- File information -->
+                      <div class="file-details">
+                        <div class="file-info">
+                          <span class="file-name">{{ chat.fileInfo.fileName }}</span>
+                          <span class="file-size">{{ (chat.fileInfo.fileSize / 1024).toFixed(1) }} KB</span>
+                        </div>
+
+                        <!-- Download button -->
+                        <button class="btn btn-download" (click)="downloadFile(chat.fileInfo.fileName)">
+                          <i class="fas fa-download"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

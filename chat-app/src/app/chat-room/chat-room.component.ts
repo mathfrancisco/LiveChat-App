@@ -16,6 +16,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   // Observable do tema
   isDarkMode$ = this.themeService.darkMode$;
 
+
   privateChats: Map<string, any[]> = new Map<string, any[]>();
   publicChats: any[] = [];
   connectedUsers: string[] = [];
@@ -26,6 +27,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     connected: false,
     message: ''
   };
+
   showEmojiPicker = false;
 
   @ViewChild('messageInput', { static: false }) messageInput!: ElementRef;
@@ -40,7 +42,8 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     private fileUploadService: FileUploadService,
     private snackBar: MatSnackBar
   ) {}
-  
+
+
    // Add new methods
   triggerFileInput(): void {
     this.fileInput.nativeElement.click();
@@ -103,46 +106,67 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     this.showEmojiPicker = false;
     inputElement.focus();
   }
-  async handleFileUpload(event: any): Promise<void> {
+
+  handleFileUpload(event: any): void {
     const file = event.target.files[0];
-    
+
     if (!file) return;
 
-    // Validate file type
     if (!file.type.match(/image.*/) && file.type !== 'application/pdf') {
       this.snackBar.open('Apenas imagens e PDFs são permitidos', 'Fechar', { duration: 3000 });
       return;
     }
 
-    // Validate file size
     if (file.size > this.maxFileSize) {
       this.snackBar.open('Arquivo muito grande. Máximo 5MB', 'Fechar', { duration: 3000 });
       return;
     }
 
-    try {
-      const uploadResult = await this.fileUploadService.uploadFile(file).toPromise();
-      
-      const message = {
-        senderName: this.userData.username,
-        receiverName: this.tab === 'CHATROOM' ? '' : this.tab,
-        message: file.name,
-        status: "MESSAGE",
-        fileInfo: {
-          fileName: file.name,
-          fileType: file.type,
-          fileUrl: uploadResult.fileUrl,
-          fileSize: file.size
-        }
-      };
+    this.fileUploadService.uploadFile(file).subscribe({
+      next: (response) => {
+        const message = {
+          senderName: this.userData.username,
+          receiverName: this.tab === 'CHATROOM' ? '' : this.tab,
+          message: `File: ${file.name}`,
+          status: "MESSAGE",
+          fileInfo: {
+            fileName: response.fileName,
+            fileType: file.type,
+            fileSize: file.size,
+            fileUrl: file.url
 
-      if (this.tab === 'CHATROOM') {
-        this.webSocketService.sendPublicMessage(message);
-      } else {
-        this.webSocketService.sendPrivateMessage(message);
+          }
+        };
+
+        // Se for uma imagem, carregar a URL para preview
+        if (file.type.startsWith('image/')) {
+          this.fileUploadService.getImageUrl(response.fileName).subscribe({
+            next: (url) => {
+              message.fileInfo.fileUrl = url;
+              this.sendFileMessage(message);
+            },
+            error: (err) => {
+              console.error('Erro ao carregar a URL da imagem:', err);
+              this.sendFileMessage(message); // Enviar a mensagem mesmo que a URL não tenha sido carregada
+            }
+          });
+        } else {
+          this.sendFileMessage(message);
+        }
+
+        this.snackBar.open('Arquivo enviado com sucesso!', 'Fechar', { duration: 3000 });
+      },
+      error: (error) => {
+        this.snackBar.open('Erro ao enviar arquivo', 'Fechar', { duration: 3000 });
+        console.error('Upload error:', error);
       }
-    } catch (error) {
-      this.snackBar.open('Erro ao enviar arquivo', 'Fechar', { duration: 3000 });
+    });
+  }
+  private sendFileMessage(message: any) {
+    if (this.tab === 'CHATROOM') {
+      this.webSocketService.sendPublicMessage(message);
+    } else {
+      this.webSocketService.sendPrivateMessage(message);
     }
   }
 
@@ -202,6 +226,24 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   setActiveTab(tab: string) {
     this.tab = tab;
   }
+// Method to download files
+  downloadFile(fileName: string): void {
+    this.fileUploadService.downloadFile(fileName)
+      .subscribe(
+        (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          link.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error => {
+          this.snackBar.open('Erro ao baixar arquivo', 'Fechar', { duration: 3000 });
+          console.error('Download error:', error);
+        }
+      );
+  }
 
   get privateChatKeys(): string[] {
     return Array.from(this.privateChats.keys());
@@ -215,11 +257,28 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Limpar URLs de imagens ao destruir o componente
     this.destroy$.next();
     this.destroy$.complete();
 
+    // Revogar todas as URLs de imagens em cache
+    if (this.publicChats) {
+      this.publicChats
+        .filter(chat => chat.fileInfo?.fileType?.startsWith('image/'))
+        .forEach(chat => {
+          this.fileUploadService.revokeImageUrl(chat.fileInfo.fileName);
+        });
+    }
+
+    this.privateChats.forEach(chats => {
+      chats
+        .filter(chat => chat.fileInfo?.fileType?.startsWith('image/'))
+        .forEach(chat => {
+          this.fileUploadService.revokeImageUrl(chat.fileInfo.fileName);
+        });
+    });
+
     if (this.userData.connected) {
       this.webSocketService.disconnect(this.userData.username);
-    }
-  }
+  }}
 }
