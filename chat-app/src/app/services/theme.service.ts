@@ -9,63 +9,37 @@ export class ThemeService {
   darkMode$ = this.darkMode.asObservable();
 
   constructor() {
-    // Aplica o tema inicial
     this.initializeTheme();
-    // Adiciona listener para mudanças na preferência do sistema
-    this.watchSystemThemeChanges();
   }
 
   private initializeTheme(): void {
-    // Verifica se há preferência salva no localStorage
     const savedTheme = localStorage.getItem('darkMode');
+
     if (savedTheme !== null) {
       this.setTheme(savedTheme === 'true');
     } else {
-      // Verifica preferência do sistema
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       this.setTheme(prefersDark);
     }
   }
 
-  private watchSystemThemeChanges(): void {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      if (!localStorage.getItem('darkMode')) {
-        this.setTheme(e.matches);
-      }
-    };
-
-    // Adiciona listener usando o método adequado
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleChange);
-    } else {
-      // Fallback para browsers mais antigos
-      mediaQuery.addListener(handleChange);
-    }
-  }
-
   private setTheme(isDark: boolean): void {
-    // Atualiza o estado interno
     this.darkMode.next(isDark);
 
-    // Aplica as classes corretamente
-    requestAnimationFrame(() => {
-      document.documentElement.classList.toggle('dark-mode', isDark);
-      document.body.classList.toggle('dark-mode', isDark);
-    });
+    // Usar o atributo data-bs-theme do Bootstrap 5.3+
+    document.documentElement.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
 
-    // Salva a preferência
     localStorage.setItem('darkMode', isDark.toString());
   }
 
   toggleTheme(): void {
-    console.log('Tema anterior:', this.darkMode.value);
-    this.setTheme(!this.darkMode.value);
-    console.log('Novo tema:', this.darkMode.value);
-  }
+    const currentTheme = this.darkMode.value;
+    console.log('Current theme before toggle:', currentTheme);
+    console.log('Current data-bs-theme:', document.documentElement.getAttribute('data-bs-theme'));
 
-  // Método para verificar o tema atual
-  isDarkMode(): boolean {
-    return this.darkMode.value;
+    this.setTheme(!currentTheme);
+
+    console.log('New theme after toggle:', this.darkMode.value);
+    console.log('New data-bs-theme:', document.documentElement.getAttribute('data-bs-theme'));
   }
 }

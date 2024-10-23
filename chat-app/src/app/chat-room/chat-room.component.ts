@@ -7,6 +7,7 @@ import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FileUploadService } from '../services/file-upload.service';
 
+
 @Component({
   selector: 'app-chat-room',
   templateUrl: './chat-room.component.html',
@@ -50,9 +51,9 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   }
   ngOnInit() {
     this.subscribeToWebSockets();
-    const isDark = this.themeService.isDarkMode();
-    document.documentElement.classList.toggle('dark-mode', isDark);
-    document.body.classList.toggle('dark-mode', isDark);
+    this.isDarkMode$.subscribe(isDark => {
+      console.log('Component received dark mode change:', isDark);
+    });
   }
 
   private subscribeToWebSockets(): void {
@@ -81,6 +82,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
 
   // Métodos do tema
   toggleDarkMode(): void {
+    console.log('Toggle dark mode clicked');
     this.themeService.toggleTheme();
   }
 
@@ -281,4 +283,6 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     if (this.userData.connected) {
       this.webSocketService.disconnect(this.userData.username);
   }}
+
+
 }
