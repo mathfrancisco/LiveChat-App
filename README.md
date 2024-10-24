@@ -21,6 +21,11 @@ O **LiveChat-App** é uma aplicação de chat em tempo real robusta e escalável
   - Alternância fácil entre chats públicos e privados.
   - Indicadores visuais para mensagens enviadas, recebidas e lidas.
   - Suporte para emojis e formatação básica de texto.
+  - Modo Claro e Escuro: Escolha entre um tema claro ou escuro, adaptando a interface para um visual mais confortável ao seu gosto.
+ 
+- **Compartilhamento de Arquivos**:
+  - Suporte a Imagens e PDFs: Envie e compartilhe fotos, documentos e arquivos em PDF diretamente pelo chat, facilitando a troca de informações.
+  - Compartilhamento de Tela: Mostre sua tela em tempo real durante conversas, ideal para reuniões, suporte remoto e apresentações.
 
 - **Segurança**:
   - Comunicação criptografada via WebSocket seguro (WSS).
