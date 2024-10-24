@@ -6,7 +6,7 @@ import { Observable, map } from 'rxjs';
   providedIn: 'root'
 })
 export class FileUploadService {
-  private baseUrl = 'http://localhost:8080';
+  private baseUrl = 'http://localhost:5000';
   private imageCache = new Map<string, string>();
 
   constructor(private http: HttpClient) {}

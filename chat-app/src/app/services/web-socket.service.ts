@@ -22,7 +22,7 @@ export class WebSocketService {
 
   constructor() {
     this.client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS('http://localhost:5000/ws'),
       onConnect: () => {
         console.log('Connected');
       },
