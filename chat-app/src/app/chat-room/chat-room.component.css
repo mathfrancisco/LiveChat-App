@@ -257,7 +257,7 @@ body {
   position: fixed;
   top: 80px;
   right: 20px;
-  max-width: 300px;
+  max-height: 400px;
   z-index: 1000;
 }
 
@@ -280,11 +280,12 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 8px;
-  background: rgba(0,0,0,0.5);
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
 }
 
 /* Área de compartilhamento de tela */
@@ -301,6 +302,7 @@ body {
   max-height: 0;
   overflow: hidden;
   transition: all 0.3s ease;
+  padding: 1rem;
 }
 
 .screen-share-grid.active {
@@ -308,11 +310,13 @@ body {
   max-height: none;
   background-color: var(--bs-secondary-bg);
   border-radius: 0.5rem;
+  margin: 1rem;
 
 }
 
 /* Container para os vídeos compartilhados */
 .screen-share-container {
+  max-height: 400px;
   max-width: 80%;
   margin: 0.5rem 0;
   background: var(--chat-message-bg);
@@ -330,7 +334,7 @@ body {
 
 .screen-share-container video {
   width: 100%;
-  max-height: 300px;
+  height: 400px;
   object-fit: contain;
   background-color: var(--bs-dark);
   display: block;
@@ -761,6 +765,23 @@ emoji-picker {
   .message-content {
     max-width: 90%;
   }
+  .screen-share-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-messages.with-screen-share {
+    height: calc(100% - var(--chat-header-height) - var(--chat-footer-height) - 420px);
+  }
+  .screen-share-container {
+    max-height: 300px;
+  }
+  .screen-share-container video {
+    height: 300px;
+  }
+  .chat-messages.with-screen-share {
+    height: calc(100% - var(--chat-header-height) - var(--chat-footer-height) - 320px);
+  }
+
 }
 
 /* Scrollbar personalizada */
@@ -779,17 +800,6 @@ emoji-picker {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--bs-gray-400);
-}
-.screen-share-grid {
-  grid-template-columns: 1fr;
-}
-
-.screen-share-container {
-  max-height: 200px;
-}
-
-.chat-messages.with-screen-share {
-  height: calc(100% - var(--chat-header-height) - var(--chat-footer-height) - 200px);
 }
 
 
