@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FileUploadService {
-  private baseUrl = 'http://localhost:5000';
   private imageCache = new Map<string, string>();
 
   constructor(private http: HttpClient) {}
@@ -14,18 +14,16 @@ export class FileUploadService {
   uploadFile(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post<any>(`${this.baseUrl}/api/upload`, formData);
+    return this.http.post<any>(environment.fileUploadUrl, formData);
   }
 
   downloadFile(fileName: string): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/api/files/${fileName}`, {
+    return this.http.get(`${environment.fileDownloadUrl}/${fileName}`, {
       responseType: 'blob'
     });
   }
 
-  // Novo método para obter URL da imagem para preview
   getImageUrl(fileName: string): Observable<string> {
-    // Verifica se já temos a URL em cache
     if (this.imageCache.has(fileName)) {
       return new Observable(observer => {
         observer.next(this.imageCache.get(fileName));
@@ -42,7 +40,6 @@ export class FileUploadService {
     );
   }
 
-  // Método para limpar URLs quando não forem mais necessárias
   revokeImageUrl(fileName: string) {
     const url = this.imageCache.get(fileName);
     if (url) {
