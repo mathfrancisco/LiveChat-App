@@ -101,9 +101,9 @@ export class ScreenShareService {
   }
 
   private isScreenSharingSupported(): boolean {
-    return window.isSecureContext &&
-      !!navigator.mediaDevices &&
-      !!navigator.mediaDevices.getDisplayMedia;}
+    return (window.location.protocol === 'https:' || window.location.hostname === 'localhost') &&
+    !!navigator.mediaDevices &&
+    !!navigator.mediaDevices.getDisplayMedia;}
 
 
 
