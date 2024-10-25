@@ -1,6 +1,15 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { WebSocketService } from './web-socket.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+
+interface DisplayMediaStreamConstraints {
+  video?: boolean | {
+    cursor?: 'always' | 'motion' | 'never';
+    displaySurface?: 'browser' | 'monitor' | 'window';
+    systemAudio?: 'include' | 'exclude';
+   }
+  }
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +22,10 @@ export class ScreenShareService {
   private screenShareStatusSubject = new BehaviorSubject<boolean>(false);
   screenShareStatus$ = this.screenShareStatusSubject.asObservable();
 
-  constructor(private webSocketService: WebSocketService) {
+  constructor(
+    private webSocketService: WebSocketService,
+    private snackBar: MatSnackBar
+  ) {
     this.setupWebSocketListeners();
   }
 
@@ -40,14 +52,39 @@ export class ScreenShareService {
 
   async startScreenShare(): Promise<void> {
     try {
-      this.mediaStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: false
-      });
+      // Perform browser compatibility checks
+      if (!this.isScreenSharingSupported()) {
+        throw new Error('Screen sharing is not supported in this browser');
+      }
+
+      // Request screen sharing with more specific constraints
+      const constraints: DisplayMediaStreamConstraints = {
+        video: {
+          cursor: 'always',
+          displaySurface: 'monitor',
+        },
+      };
+
+      // Use try-catch specifically for getDisplayMedia
+      try {
+        this.mediaStream = await navigator.mediaDevices.getDisplayMedia(constraints);
+      } catch (error: any) {
+        if (error.name === 'NotAllowedError') {
+          throw new Error('Screen sharing permission denied by user');
+        } else {
+          throw new Error(`Failed to start screen sharing: ${error.message}`);
+        }
+      }
 
       this.screenShareStatusSubject.next(true);
 
-      // Create peer connections for all connected users
+      // Set up stream ending handler
+      const videoTrack = this.mediaStream.getVideoTracks()[0];
+      videoTrack.onended = () => {
+        this.stopScreenShare();
+      };
+
+      // Create peer connections for connected users
       const connectedUsers = this.webSocketService.getConnectedUsers();
       for (const userId of connectedUsers) {
         if (userId !== this.webSocketService.getCurrentUser()) {
@@ -56,16 +93,21 @@ export class ScreenShareService {
         }
       }
 
-      // Handle stream end
-      this.mediaStream.getVideoTracks()[0].onended = () => {
-        this.stopScreenShare();
-      };
-    } catch (error) {
-      console.error('Error starting screen share:', error);
+    } catch (error: any) {
+      console.error('Screen sharing error:', error);
+      this.snackBar.open(error.message, 'Close', { duration: 5000 });
       throw error;
     }
   }
 
+  private isScreenSharingSupported(): boolean {
+    return window.isSecureContext &&
+      !!navigator.mediaDevices &&
+      !!navigator.mediaDevices.getDisplayMedia;}
+
+
+
+  // Rest of the service implementation remains the same...
   stopScreenShare() {
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
@@ -85,9 +127,12 @@ export class ScreenShareService {
     });
   }
 
-  // Get local media stream directly
   getLocalStream(): MediaStream | null {
     return this.mediaStream;
+  }
+
+  getRemoteStream(userId: string): MediaStream | null {
+    return this.remoteStreams.get(userId) || null;
   }
 
   private async createPeerConnection(userId: string): Promise<RTCPeerConnection> {
@@ -193,9 +238,5 @@ export class ScreenShareService {
       this.peerConnections.delete(userId);
     }
     this.remoteStreams.delete(userId);
-  }
-
-  getRemoteStream(userId: string): MediaStream | null {
-    return this.remoteStreams.get(userId) || null;
   }
 }
