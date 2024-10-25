@@ -4,5 +4,5 @@ export const environment = {
   wsUrl: 'http://livechat.sa-east-1.elasticbeanstalk.com/ws',
   fileUploadUrl: 'http://livechat.sa-east-1.elasticbeanstalk.com/api/upload',
   fileDownloadUrl: 'http://livechat.sa-east-1.elasticbeanstalk.com/api/files',
-  // Add other production environment variables here
+  // Adicione outras variáveis de ambiente de produção aqui
 };

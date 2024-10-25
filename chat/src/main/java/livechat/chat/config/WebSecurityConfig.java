@@ -54,7 +54,8 @@ public class WebSecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:4200",
                 "http://localhost:5000",
-                "http://livechat.sa-east-1.elasticbeanstalk.com"
+                "http://livechat.sa-east-1.elasticbeanstalk.com",
+                "https://livechat.sa-east-1.elasticbeanstalk.com"
         ));
 
         configuration.setAllowedMethods(Arrays.asList(
