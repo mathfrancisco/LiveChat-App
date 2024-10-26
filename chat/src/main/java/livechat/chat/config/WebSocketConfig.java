@@ -13,7 +13,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("http://localhost:4200", "http://localhost:8080","http://livechat.sa-east-1.elasticbeanstalk.com","https://livechat.sa-east-1.elasticbeanstalk.com" )  // Specify exact origins
+                .setAllowedOrigins(
+                        "http://localhost:4200",
+                        "http://localhost:8080",
+                        "http://livechat.sa-east-1.elasticbeanstalk.com",
+                        "https://livechat.sa-east-1.elasticbeanstalk.com",
+                        "http://livechat.tech",
+                        "https://livechat.tech"
+                )
                 .withSockJS()
                 .setWebSocketEnabled(true)
                 .setHeartbeatTime(25000)

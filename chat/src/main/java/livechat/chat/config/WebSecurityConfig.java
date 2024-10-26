@@ -20,8 +20,11 @@ public class WebSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .requiresChannel(channel -> channel
-                   .requestMatchers(r -> r.getHeader("X-Forwarded-Proto") != null)
-                   .requiresSecure())
+
+                        .requestMatchers(r -> r.getHeader("X-Forwarded-Proto") != null)
+                        .requiresSecure()
+                        .anyRequest()
+                        .requiresSecure())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
@@ -53,12 +56,14 @@ public class WebSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow both development and production origins
+        // Updated allowed origins to include your domain
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:4200",
                 "http://localhost:5000",
                 "http://livechat.sa-east-1.elasticbeanstalk.com",
-                "https://livechat.sa-east-1.elasticbeanstalk.com"
+                "https://livechat.sa-east-1.elasticbeanstalk.com",
+                "http://livechat.tech",
+                "https://livechat.tech"
         ));
 
         configuration.setAllowedMethods(Arrays.asList(
