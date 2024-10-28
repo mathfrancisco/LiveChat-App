@@ -26,8 +26,10 @@ export class WebSocketService {
   }
 
   private initializeWebSocketClient(): void {
+    const wsUrl = environment.wsUrl.replace('http://', 'wss://').replace('https://', 'wss://');
+
     this.client = new Client({
-      webSocketFactory: () => new SockJS(environment.wsUrl),
+      webSocketFactory: () => new SockJS(wsUrl),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
