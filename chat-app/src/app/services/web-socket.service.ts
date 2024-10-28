@@ -8,7 +8,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class WebSocketService {
-  private client!: Client;  // Using definite assignment assertion
+  private client!: Client;
   private publicMessagesSubject = new BehaviorSubject<any>(null);
   private privateMessagesSubject = new BehaviorSubject<any>(null);
   private connectedUsersSubject = new BehaviorSubject<string[]>([]);
@@ -26,10 +26,20 @@ export class WebSocketService {
   }
 
   private initializeWebSocketClient(): void {
-    const wsUrl = environment.wsUrl.replace('http://', 'wss://').replace('https://', 'wss://');
+    // Determine o protocolo com base no ambiente atual
+    const isSecure = window.location.protocol === 'https:';
+    const wsProtocol = isSecure ? 'wss:' : 'ws:';
+
+    // Se estiver em desenvolvimento, use a URL do environment
+    const wsUrl = environment.production
+      ? `${window.location.protocol}//${window.location.host}/ws`
+      : environment.wsUrl;
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS(wsUrl),
+      webSocketFactory: () => new SockJS(wsUrl, null, {
+        transports: ['websocket', 'xhr-streaming', 'xhr-polling'],
+        timeout: 10000,
+      }),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,

@@ -7,9 +7,24 @@ interface DisplayMediaStreamConstraints {
   video?: boolean | {
     cursor?: 'always' | 'motion' | 'never';
     displaySurface?: 'browser' | 'monitor' | 'window';
-    systemAudio?: 'include' | 'exclude';
-   }
-  }
+    logicalSurface?: boolean;
+    suppressLocalAudioPlayback?: boolean;
+  };
+  audio?: boolean | {
+    echoCancellation?: boolean;
+    noiseSuppression?: boolean;
+    autoGainControl?: boolean;
+  };
+}
+
+interface ScreenShareMessage {
+  type: 'offer' | 'answer' | 'ice-candidate' | 'screen-share-stop';
+  from: string;
+  to?: string;
+  offer?: RTCSessionDescriptionInit;
+  answer?: RTCSessionDescriptionInit;
+  candidate?: RTCIceCandidate;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -22,101 +37,201 @@ export class ScreenShareService {
   private screenShareStatusSubject = new BehaviorSubject<boolean>(false);
   screenShareStatus$ = this.screenShareStatusSubject.asObservable();
 
+  // Configuration for WebRTC
+  private readonly rtcConfiguration: RTCConfiguration = {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' }
+    ],
+    iceCandidatePoolSize: 10,
+    bundlePolicy: 'max-bundle',
+    rtcpMuxPolicy: 'require'
+  };
+
   constructor(
     private webSocketService: WebSocketService,
     private snackBar: MatSnackBar
   ) {
     this.setupWebSocketListeners();
+    this.logBrowserSupport();
   }
 
-  private setupWebSocketListeners() {
-    this.webSocketService.screenShareMessages$.subscribe(async (message) => {
+  private logBrowserSupport(): void {
+    console.log('Screen Sharing Support Check:', {
+      isSecureContext: window.isSecureContext,
+      hasMediaDevices: !!navigator.mediaDevices,
+      hasGetDisplayMedia: (navigator.mediaDevices && 'getDisplayMedia' in navigator.mediaDevices),
+      protocol: window.location.protocol,
+      isLocalhost: window.location.hostname === 'localhost',
+    });
+  }
+
+  private setupWebSocketListeners(): void {
+    this.webSocketService.screenShareMessages$.subscribe(async (message: ScreenShareMessage) => {
       if (!message) return;
 
-      switch (message.type) {
-        case 'offer':
-          await this.handleOffer(message);
-          break;
-        case 'answer':
-          await this.handleAnswer(message);
-          break;
-        case 'ice-candidate':
-          await this.handleIceCandidate(message);
-          break;
-        case 'screen-share-stop':
-          this.handleRemoteScreenShareStop(message.from);
-          break;
+      try {
+        switch (message.type) {
+          case 'offer':
+            await this.handleOffer(message);
+            break;
+          case 'answer':
+            await this.handleAnswer(message);
+            break;
+          case 'ice-candidate':
+            await this.handleIceCandidate(message);
+            break;
+          case 'screen-share-stop':
+            this.handleRemoteScreenShareStop(message.from);
+            break;
+          default:
+            console.warn('Unknown message type:', message.type);
+        }
+      } catch (error) {
+        console.error('Error handling WebSocket message:', error);
+        this.showError(`Error in screen sharing: error`);
       }
     });
   }
 
+  private isScreenSharingSupported(): boolean {
+    const isSecureOrLocal = window.isSecureContext ||
+      window.location.hostname === 'localhost' ||
+      this.isInsecureOriginAllowed();
+
+    const hasRequiredAPIs = navigator.mediaDevices &&
+      'getDisplayMedia' in navigator.mediaDevices;
+
+    return isSecureOrLocal && hasRequiredAPIs;
+  }
+
+  private isInsecureOriginAllowed(): boolean {
+    try {
+      // Chrome specific checks for allowing screen share in HTTP
+      return !!(window as any).chrome &&
+        (!!(window as any).chrome.webstore || !!(window as any).chrome.runtime);
+    } catch {
+      return false;
+    }
+  }
+
   async startScreenShare(): Promise<void> {
     try {
-      // Perform browser compatibility checks
       if (!this.isScreenSharingSupported()) {
-        throw new Error('Screen sharing is not supported in this browser');
+        throw new Error(
+          window.location.protocol === 'http:'
+            ? 'Screen sharing requires HTTPS. Please use HTTPS or contact your administrator.'
+            : 'Screen sharing is not supported in this browser'
+        );
       }
 
-      // Request screen sharing with more specific constraints
       const constraints: DisplayMediaStreamConstraints = {
         video: {
           cursor: 'always',
           displaySurface: 'monitor',
+          logicalSurface: true,
+          suppressLocalAudioPlayback: true
         },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
       };
 
-      // Use try-catch specifically for getDisplayMedia
       try {
         this.mediaStream = await navigator.mediaDevices.getDisplayMedia(constraints);
       } catch (error: any) {
-        if (error.name === 'NotAllowedError') {
-          throw new Error('Screen sharing permission denied by user');
-        } else {
-          throw new Error(`Failed to start screen sharing: ${error.message}`);
-        }
+        const errorMessage = this.getDisplayMediaErrorMessage(error);
+        throw new Error(errorMessage);
       }
 
+      this.setupMediaStreamListeners();
+      await this.createPeerConnectionsForUsers();
       this.screenShareStatusSubject.next(true);
-
-      // Set up stream ending handler
-      const videoTrack = this.mediaStream.getVideoTracks()[0];
-      videoTrack.onended = () => {
-        this.stopScreenShare();
-      };
-
-      // Create peer connections for connected users
-      const connectedUsers = this.webSocketService.getConnectedUsers();
-      for (const userId of connectedUsers) {
-        if (userId !== this.webSocketService.getCurrentUser()) {
-          const peerConnection = await this.createPeerConnection(userId);
-          await this.createAndSendOffer(userId, peerConnection);
-        }
-      }
 
     } catch (error: any) {
       console.error('Screen sharing error:', error);
-      this.snackBar.open(error.message, 'Close', { duration: 5000 });
+      this.showError(error.message);
       throw error;
     }
   }
 
-  private isScreenSharingSupported(): boolean {
-    return (window.location.protocol === 'https:' || window.location.hostname === 'localhost') &&
-    !!navigator.mediaDevices &&
-    !!navigator.mediaDevices.getDisplayMedia;}
+  private setupMediaStreamListeners(): void {
+    if (!this.mediaStream) return;
 
+    const videoTrack = this.mediaStream.getVideoTracks()[0];
+    if (videoTrack) {
+      videoTrack.onended = () => {
+        console.log('Video track ended');
+        this.stopScreenShare();
+      };
 
+      videoTrack.onmute = () => {
+        console.log('Video track muted');
+        this.showNotification('Screen share was muted');
+      };
 
-  // Rest of the service implementation remains the same...
-  stopScreenShare() {
+      videoTrack.onunmute = () => {
+        console.log('Video track unmuted');
+        this.showNotification('Screen share was unmuted');
+      };
+    }
+  }
+
+  private async createPeerConnectionsForUsers(): Promise<void> {
+    const connectedUsers = this.webSocketService.getConnectedUsers();
+    const currentUser = this.webSocketService.getCurrentUser();
+
+    for (const userId of connectedUsers) {
+      if (userId !== currentUser) {
+        try {
+          const peerConnection = await this.createPeerConnection(userId);
+          await this.createAndSendOffer(userId, peerConnection);
+        } catch (error) {
+          console.error(`Error creating peer connection for user ${userId}:`, error);
+          this.showError(`Failed to connect with user ${userId}`);
+        }
+      }
+    }
+  }
+
+  private getDisplayMediaErrorMessage(error: any): string {
+    switch (error.name) {
+      case 'NotAllowedError':
+        return 'Screen sharing permission denied by user';
+      case 'NotReadableError':
+        return 'The screen contents could not be captured';
+      case 'NotFoundError':
+        return 'No screen sharing source was found';
+      case 'NotSupportedError':
+        return 'Screen sharing is not supported in this browser or configuration';
+      case 'InvalidStateError':
+        return 'Screen sharing is already in progress';
+      default:
+        return `Failed to start screen sharing: ${error.message}`;
+    }
+  }
+
+  stopScreenShare(): void {
     if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach(track => track.stop());
+      this.mediaStream.getTracks().forEach(track => {
+        track.stop();
+        console.log(`Stopped track: ${track.kind}`);
+      });
       this.mediaStream = null;
     }
 
     // Close all peer connections
-    this.peerConnections.forEach(connection => connection.close());
+    this.peerConnections.forEach((connection, userId) => {
+      console.log(`Closing connection with user: ${userId}`);
+      connection.close();
+    });
     this.peerConnections.clear();
+    this.remoteStreams.clear();
 
     this.screenShareStatusSubject.next(false);
 
@@ -127,36 +242,28 @@ export class ScreenShareService {
     });
   }
 
-  getLocalStream(): MediaStream | null {
-    return this.mediaStream;
-  }
-
-  getRemoteStream(userId: string): MediaStream | null {
-    return this.remoteStreams.get(userId) || null;
-  }
-
   private async createPeerConnection(userId: string): Promise<RTCPeerConnection> {
-    const peerConnection = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
-    });
+    const peerConnection = new RTCPeerConnection(this.rtcConfiguration);
 
-    // Add tracks to peer connection
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => {
         peerConnection.addTrack(track, this.mediaStream!);
       });
     }
 
-    // Handle remote tracks
+    this.setupPeerConnectionListeners(peerConnection, userId);
+    this.peerConnections.set(userId, peerConnection);
+
+    return peerConnection;
+  }
+
+  private setupPeerConnectionListeners(peerConnection: RTCPeerConnection, userId: string): void {
     peerConnection.ontrack = (event) => {
+      console.log(`Received track from user ${userId}:`, event.track.kind);
       const stream = event.streams[0];
       this.remoteStreams.set(userId, stream);
     };
 
-    // Handle ICE candidates
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
         this.webSocketService.sendScreenShareMessage({
@@ -168,14 +275,47 @@ export class ScreenShareService {
       }
     };
 
-    // Store peer connection
-    this.peerConnections.set(userId, peerConnection);
-    return peerConnection;
+    peerConnection.oniceconnectionstatechange = () => {
+      console.log(`ICE Connection State (${userId}):`, peerConnection.iceConnectionState);
+      if (peerConnection.iceConnectionState === 'failed') {
+        this.handleConnectionFailure(userId);
+      }
+    };
+
+    peerConnection.onconnectionstatechange = () => {
+      console.log(`Connection State (${userId}):`, peerConnection.connectionState);
+    };
+
+    peerConnection.onnegotiationneeded = async () => {
+      try {
+        await this.createAndSendOffer(userId, peerConnection);
+      } catch (error) {
+        console.error('Error during negotiation:', error);
+      }
+    };
   }
 
-  private async createAndSendOffer(userId: string, peerConnection: RTCPeerConnection) {
+  private async handleConnectionFailure(userId: string): Promise<void> {
+    console.log(`Attempting to recover connection with user ${userId}`);
+    const peerConnection = this.peerConnections.get(userId);
+
+    if (peerConnection) {
+      try {
+        await this.createAndSendOffer(userId, peerConnection);
+      } catch (error) {
+        console.error('Failed to recover connection:', error);
+        this.showError(`Connection with user ${userId} was lost`);
+      }
+    }
+  }
+
+  private async createAndSendOffer(userId: string, peerConnection: RTCPeerConnection): Promise<void> {
     try {
-      const offer = await peerConnection.createOffer();
+      const offer = await peerConnection.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true
+      });
+
       await peerConnection.setLocalDescription(offer);
 
       this.webSocketService.sendScreenShareMessage({
@@ -190,10 +330,10 @@ export class ScreenShareService {
     }
   }
 
-  private async handleOffer(message: any) {
+  private async handleOffer(message: ScreenShareMessage): Promise<void> {
     try {
       const peerConnection = await this.createPeerConnection(message.from);
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(message.offer));
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(message.offer!));
 
       const answer = await peerConnection.createAnswer();
       await peerConnection.setLocalDescription(answer);
@@ -206,37 +346,65 @@ export class ScreenShareService {
       });
     } catch (error) {
       console.error('Error handling offer:', error);
+      this.showError('Failed to establish connection');
     }
   }
 
-  private async handleAnswer(message: any) {
+  private async handleAnswer(message: ScreenShareMessage): Promise<void> {
     try {
       const peerConnection = this.peerConnections.get(message.from);
       if (peerConnection) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(message.answer));
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(message.answer!));
       }
     } catch (error) {
       console.error('Error handling answer:', error);
     }
   }
 
-  private async handleIceCandidate(message: any) {
+  private async handleIceCandidate(message: ScreenShareMessage): Promise<void> {
     try {
       const peerConnection = this.peerConnections.get(message.from);
       if (peerConnection) {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
+        await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate!));
       }
     } catch (error) {
       console.error('Error handling ICE candidate:', error);
     }
   }
 
-  private handleRemoteScreenShareStop(userId: string) {
+  private handleRemoteScreenShareStop(userId: string): void {
+    console.log(`Remote screen share stopped for user: ${userId}`);
     const peerConnection = this.peerConnections.get(userId);
     if (peerConnection) {
       peerConnection.close();
       this.peerConnections.delete(userId);
     }
     this.remoteStreams.delete(userId);
+  }
+
+  private showError(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
+  }
+
+  private showNotification(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000
+    });
+  }
+
+  // Public methods for external access
+  getLocalStream(): MediaStream | null {
+    return this.mediaStream;
+  }
+
+  getRemoteStream(userId: string): MediaStream | null {
+    return this.remoteStreams.get(userId) || null;
+  }
+
+  isScreenSharing(): boolean {
+    return this.screenShareStatusSubject.value;
   }
 }
